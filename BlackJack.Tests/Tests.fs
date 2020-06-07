@@ -47,3 +47,9 @@ let ``trying to draw a card from an empty deck returns None`` () =
     match result with
     | Some _ -> Assert.True(false)
     | None -> Assert.True(true)
+    
+[<Fact>]
+let ``Hand calculation`` () =
+    let hand = [{ Face = Two; Suit = Spades }; { Face = King; Suit = Hearts }]
+    let score = calcScore hand
+    Assert.Equal(Stayed (Score 12), score)

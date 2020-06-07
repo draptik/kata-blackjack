@@ -8,7 +8,7 @@ type Points = Hard of int | Soft of int * int
 type Deck = Card list
 type Hand = Card list
 type Score = Score of int
-type Status = BlackJack | Busted of Score | Stayed of Score | CardsDealt
+type Status = BlackJack | Busted | Stayed of Score | CardsDealt
 type Dealer = { Hand: Hand; Status: Status }
 type Player = { Hand: Hand; Status: Status; Id: int }
 type Players = Player list
@@ -36,11 +36,6 @@ let createDeck : Deck =
         deck |> List.sortBy (fun x -> random.Next())
     fullDeck |> shuffle 
 
-//let drawCardSimple deck =
-//    match deck with
-//    | [] -> None
-//    | topCard::restOfDeck -> Some (topCard, restOfDeck)
-
 type DrawCardFcn = Deck -> (Card * Deck) option
 let drawCard : DrawCardFcn =
     fun deck ->
@@ -48,31 +43,6 @@ let drawCard : DrawCardFcn =
         | [] -> None
         | topCard::restOfDeck -> Some (topCard, restOfDeck)
 
-// 1. iteration
-//type SetupPlayer = (Deck -> (Card * Deck) option) -> int -> Deck -> (Player * Deck) 
-////let setupPlayerNaive drawCard id deck =
-//let setupPlayerNaive : SetupPlayer =
-//    fun drawCard id deck ->
-//    let firstCard, deck = drawCard deck
-//    let secondCard, deck = drawCard deck
-//    let hand = [firstCard; secondCard]
-//    
-//    { Hand = hand; Id = id; Status = CardsDealt }, deck
-
-// 2. iteration
-//type SetupPlayerOpt = (Deck -> (Card * Deck) option) -> int -> Deck -> (Player * Deck) option 
-//let setupPlayer2 : SetupPlayerOpt =
-//    fun drawCard id deck ->
-//        match drawCard deck with
-//        | None -> None
-//        | Some (firstCard, deck) ->
-//            match drawCard deck with
-//            | None -> None
-//            | Some (secondCard, deck) ->
-//                let hand = [firstCard; secondCard]
-//                Some ({Hand = hand; Id = id; Status = CardsDealt}, deck)
-
-// 3. iteration
 type MaybeBuilder() =
     member this.Bind(input, func) =
         match input with
@@ -83,7 +53,6 @@ type MaybeBuilder() =
         Some value
 
 type SetupPlayerOptFcn = DrawCardFcn -> int -> Deck -> (Player * Deck) option         
-//let setupPlayer drawCard id deck =
 let setupPlayer : SetupPlayerOptFcn =
     fun drawCard id deck ->
         let maybe = MaybeBuilder ()
@@ -96,14 +65,41 @@ let setupPlayer : SetupPlayerOptFcn =
             return {Hand = hand; Id = id; Status = CardsDealt}, deck
         }
 
-let hasPlayerWon player =
-    match player.Status with
-    | BlackJack -> true
-    | _ -> false
-
-let isPlayerBusted player =
-    match player.Status with
-    | Busted _ -> true
-    | _ -> false
-
+let calcScore (hand: Hand) : Status =
+    let getCardValue card =
+        match card.Face with
+        | Two -> 2
+        | Three -> 3
+        | Four -> 4
+        | Five -> 5
+        | Six -> 6
+        | Seven -> 7
+        | Eight -> 8
+        | Nine -> 9
+        | Ten | Jack | Queen | King -> 10
+        | _ -> 0 // <- mmh, Ace handling, not nice...
+        
+    let valuesWithoutAces =
+        hand
+        |> List.filter (fun c -> c.Face <> Ace)
+        |> List.map (fun c -> getCardValue c)
+        
+    let sumWithoutAces =
+        valuesWithoutAces
+        |> List.sum
+        
+    let numberOfAces = hand.Length - valuesWithoutAces.Length
     
+    // nice trick found here: https://github.com/todoa2c/blackjack-fsharp/blob/master/BlackJack/Program.fs
+    let pointsWithAceAsOne, pointsWithAceAsEleven = sumWithoutAces + numberOfAces, sumWithoutAces + numberOfAces + 10
+    
+    match numberOfAces, pointsWithAceAsOne, pointsWithAceAsEleven with
+    | 0, _, _ when sumWithoutAces <= 21 -> Stayed (Score sumWithoutAces)
+    | _, _, pointsWithAceAsEleven when pointsWithAceAsEleven <= 21 -> Stayed (Score pointsWithAceAsEleven)
+    | _, pointsWithAceAsOne, _ when pointsWithAceAsOne <= 21 -> Stayed (Score pointsWithAceAsOne)
+    | _, _, _ -> Busted
+
+// https://github.com/todoa2c/blackjack-fsharp
+// https://github.com/dudeNumber4/fsharp-blackjack
+// https://github.com/defshef/defshef-blackjack/tree/master/fsharp
+// https://github.com/leandrosilva/fsharp-learning/blob/master/fsharp-tutorial-jaoo-2009/tutorial/FunctionalTypes/ExerciseSolution.fsx
