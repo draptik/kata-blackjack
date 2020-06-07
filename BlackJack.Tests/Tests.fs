@@ -40,4 +40,10 @@ let ``setup 2 players: each player has 2 cards and deck has 48 cards`` () =
         | Some (p2, d2) ->
             Assert.Equal((p1.Hand.Length, p2.Hand.Length, d2.Length), (2, 2, 48))
 
-    
+[<Fact>]
+let ``trying to draw a card from an empty deck returns None`` () =
+    let deck = []
+    let result = drawCard deck
+    match result with
+    | Some _ -> Assert.True(false)
+    | None -> Assert.True(true)
