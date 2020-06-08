@@ -66,7 +66,7 @@ let setupPlayer : SetupPlayerOptFcn =
         }
 
 let calcScore (hand: Hand) : Score =
-    let getCardValue card =
+    let getCardValueSoft card =
         match card.Rank with
         | Two -> 2
         | Three -> 3
@@ -79,20 +79,20 @@ let calcScore (hand: Hand) : Score =
         | Ten | Jack | Queen | King -> 10
         | Ace -> 11
 
-    let getCardValueAceOne card =
+    let getCardValueHard card =
         match card.Rank with
         | Ace -> 1
-        | _ -> getCardValue card
+        | _ -> getCardValueSoft card
     
     let getHandValue hand =
-        let simpleValue = List.fold (fun accumulator element -> accumulator + getCardValue element) 0 hand
+        let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 hand
         
-        if simpleValue <= 21 then simpleValue
+        if softValue <= 21 then softValue
         else
             List.fold (fun accumulator element ->
-                let newValue = accumulator + getCardValue element
+                let newValue = accumulator + getCardValueSoft element
                 if newValue < 21 then newValue
-                else accumulator + getCardValueAceOne element)
+                else accumulator + getCardValueHard element)
                 0
                 (List.sort hand)
                 
