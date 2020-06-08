@@ -64,40 +64,6 @@ let setupPlayer : SetupPlayerOptFcn =
 
             return {Hand = hand; Id = id; Status = CardsDealt}, deck
         }
-//
-//let calcScore (hand: Hand) : Status =
-//    let getCardValue card =
-//        match card.Face with
-//        | Two -> 2
-//        | Three -> 3
-//        | Four -> 4
-//        | Five -> 5
-//        | Six -> 6
-//        | Seven -> 7
-//        | Eight -> 8
-//        | Nine -> 9
-//        | Ten | Jack | Queen | King -> 10
-//        | _ -> 0 // <- mmh, Ace handling, not nice...
-//        
-//    let valuesWithoutAces =
-//        hand
-//        |> List.filter (fun c -> c.Face <> Ace)
-//        |> List.map (fun c -> getCardValue c)
-//        
-//    let sumWithoutAces =
-//        valuesWithoutAces
-//        |> List.sum
-//        
-//    let numberOfAces = hand.Length - valuesWithoutAces.Length
-//    
-//    // nice trick found here: https://github.com/todoa2c/blackjack-fsharp/blob/master/BlackJack/Program.fs
-//    let pointsWithAceAsOne, pointsWithAceAsEleven = sumWithoutAces + numberOfAces, sumWithoutAces + numberOfAces + 10
-//    
-//    match numberOfAces, pointsWithAceAsOne, pointsWithAceAsEleven with
-//    | 0, _, _ when sumWithoutAces <= 21 -> Stayed (Score sumWithoutAces)
-//    | _, _, pointsWithAceAsEleven when pointsWithAceAsEleven <= 21 -> Stayed (Score pointsWithAceAsEleven)
-//    | _, pointsWithAceAsOne, _ when pointsWithAceAsOne <= 21 -> Stayed (Score pointsWithAceAsOne)
-//    | _, _, _ -> Busted
 
 let calcScore (hand: Hand) : Status =
     let getCardValue card =

@@ -55,13 +55,25 @@ let ``Hand calculation below 21`` () =
     Assert.Equal(Stayed (Score 12), score)
     
 [<Fact>]
+let ``Hand calculation below 21 with Ace as 1`` () =
+    let hand = [{ Face = Ace; Suit = Spades }; { Face = Nine; Suit = Hearts }; { Face = Five; Suit = Hearts }]
+    let score = calcScore hand
+    Assert.Equal(Stayed (Score 15), score)
+    
+[<Fact>]
+let ``Hand calculation below 21 with two Aces`` () =
+    let hand = [{ Face = Ace; Suit = Spades }; { Face = Nine; Suit = Hearts }; { Face = Five; Suit = Hearts }; { Face = Ace; Suit = Clubs }]
+    let score = calcScore hand
+    Assert.Equal(Stayed (Score 16), score)
+    
+[<Fact>]
 let ``Hand calculation blackjack`` () =
     let hand = [{ Face = Ace; Suit = Spades }; { Face = King; Suit = Hearts }]
     let score = calcScore hand
     Assert.Equal(BlackJack, score)
     
 [<Fact>]
-let ``Hand calculation Busted`` () =
+let ``Hand calculation Busted (with correct score)`` () =
     let hand = [{ Face = Queen; Suit = Spades }; { Face = King; Suit = Hearts }; { Face = Five; Suit = Hearts }]
     let score = calcScore hand
     Assert.Equal(Busted (Score 25), score)
