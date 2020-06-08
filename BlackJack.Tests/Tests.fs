@@ -48,31 +48,31 @@ let ``trying to draw a card from an empty deck returns None`` () =
     | None -> Assert.True(true)
     
 [<Fact>]
-let ``Hand calculation below 21`` () =
+let ``Status and score: below 21`` () =
     [{ Rank = Two; Suit = Spades }; { Rank = King; Suit = Hearts }]
     |> getStatus |> should equal (Stayed (Score 12))
     
 [<Fact>]
-let ``Hand calculation below 21 with Ace as 1`` () =
+let ``Status and score: below 21 with Ace as 1`` () =
     [{ Rank = Ace; Suit = Spades }; { Rank = Nine; Suit = Hearts }; { Rank = Five; Suit = Hearts }]
     |> getStatus |> should equal (Stayed (Score 15))
     
 [<Fact>]
-let ``Hand calculation below 21 with two Aces`` () =
+let ``Status and score: below 21 with two Aces`` () =
     [{ Rank = Ace; Suit = Spades }; { Rank = Nine; Suit = Hearts }; { Rank = Five; Suit = Hearts }; { Rank = Ace; Suit = Clubs }]
     |> getStatus |> should equal (Stayed (Score 16))
     
 [<Fact>]
-let ``Hand calculation 21 (more than 2 cards)`` () =
+let ``Status and score: 21 (more than 2 cards)`` () =
     [{ Rank = Two; Suit = Spades }; { Rank = King; Suit = Hearts }; { Rank = Nine; Suit = Clubs }]
     |> getStatus |> should equal (Stayed (Score 21))
 
 [<Fact>]
-let ``Hand calculation 21 with 2 cards: BlackJack`` () =
+let ``Status and score: 21 with 2 cards: BlackJack`` () =
     [{ Rank = Ace; Suit = Spades }; { Rank = King; Suit = Hearts }]
     |> getStatus |> should equal (BlackJack)
     
 [<Fact>]
-let ``Hand calculation Busted (with correct score)`` () =
+let ``Status and score: Busted (with correct score)`` () =
     [{ Rank = Queen; Suit = Spades }; { Rank = King; Suit = Hearts }; { Rank = Five; Suit = Hearts }]
     |> getStatus |> should equal (Busted (Score 25))
