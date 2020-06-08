@@ -2,13 +2,12 @@ module Tests
 
 open System
 open Xunit
+open FsUnit.Xunit
 open BlackJack.Domain
-open Xunit
 
 [<Fact>]
 let ``a deck has 52 cards initially`` () =
-    let deck = createDeck
-    Assert.Equal(deck.Length, 52)
+    createDeck |> List.length |> should equal 52
     
 [<Fact>]
 let ``drawing a card from the deck reduces number of cards in deck by one`` () =
