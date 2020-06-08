@@ -50,30 +50,30 @@ let ``trying to draw a card from an empty deck returns None`` () =
     
 [<Fact>]
 let ``Hand calculation below 21`` () =
-    let hand = [{ Face = Two; Suit = Spades }; { Face = King; Suit = Hearts }]
-    let score = calcScore hand
+    let hand = [{ Rank = Two; Suit = Spades }; { Rank = King; Suit = Hearts }]
+    let score = getStatus hand
     Assert.Equal(Stayed (Score 12), score)
     
 [<Fact>]
 let ``Hand calculation below 21 with Ace as 1`` () =
-    let hand = [{ Face = Ace; Suit = Spades }; { Face = Nine; Suit = Hearts }; { Face = Five; Suit = Hearts }]
-    let score = calcScore hand
+    let hand = [{ Rank = Ace; Suit = Spades }; { Rank = Nine; Suit = Hearts }; { Rank = Five; Suit = Hearts }]
+    let score = getStatus hand
     Assert.Equal(Stayed (Score 15), score)
     
 [<Fact>]
 let ``Hand calculation below 21 with two Aces`` () =
-    let hand = [{ Face = Ace; Suit = Spades }; { Face = Nine; Suit = Hearts }; { Face = Five; Suit = Hearts }; { Face = Ace; Suit = Clubs }]
-    let score = calcScore hand
+    let hand = [{ Rank = Ace; Suit = Spades }; { Rank = Nine; Suit = Hearts }; { Rank = Five; Suit = Hearts }; { Rank = Ace; Suit = Clubs }]
+    let score = getStatus hand
     Assert.Equal(Stayed (Score 16), score)
     
 [<Fact>]
 let ``Hand calculation blackjack`` () =
-    let hand = [{ Face = Ace; Suit = Spades }; { Face = King; Suit = Hearts }]
-    let score = calcScore hand
+    let hand = [{ Rank = Ace; Suit = Spades }; { Rank = King; Suit = Hearts }]
+    let score = getStatus hand
     Assert.Equal(BlackJack, score)
     
 [<Fact>]
 let ``Hand calculation Busted (with correct score)`` () =
-    let hand = [{ Face = Queen; Suit = Spades }; { Face = King; Suit = Hearts }; { Face = Five; Suit = Hearts }]
-    let score = calcScore hand
+    let hand = [{ Rank = Queen; Suit = Spades }; { Rank = King; Suit = Hearts }; { Rank = Five; Suit = Hearts }]
+    let score = getStatus hand
     Assert.Equal(Busted (Score 25), score)

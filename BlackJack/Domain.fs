@@ -1,8 +1,8 @@
 module BlackJack.Domain
 
 type Suit = Hearts | Spades | Diamonds | Clubs
-type Face = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
-type Card = { Face: Face; Suit: Suit }
+type Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
+type Card = { Rank: Rank; Suit: Suit }
 type Points = Hard of int | Soft of int * int
 
 type Deck = Card list
@@ -19,7 +19,7 @@ type Game = { Deck: Deck; Dealer: Dealer; Players: Players }
 
 
 // Face list
-let allFaces = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace]
+let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
  
 // Suit list
 let allSuits = [Diamonds; Hearts; Clubs; Spades]
@@ -27,8 +27,8 @@ let allSuits = [Diamonds; Hearts; Clubs; Spades]
 // extended list comprehension
 let fullDeck = [
     for suit in allSuits do
-    for face in allFaces do
-    yield { Suit = suit; Face = face } ]
+    for rank in allRanks do
+    yield { Suit = suit; Rank = rank } ]
 
 let createDeck : Deck =
     let shuffle deck = 
@@ -65,9 +65,9 @@ let setupPlayer : SetupPlayerOptFcn =
             return {Hand = hand; Id = id; Status = CardsDealt}, deck
         }
 
-let calcScore (hand: Hand) : Status =
+let calcScore (hand: Hand) : Score =
     let getCardValue card =
-        match card.Face with
+        match card.Rank with
         | Two -> 2
         | Three -> 3
         | Four -> 4
@@ -80,7 +80,7 @@ let calcScore (hand: Hand) : Status =
         | Ace -> 11
 
     let getCardValueAceOne card =
-        match card.Face with
+        match card.Rank with
         | Ace -> 1
         | _ -> getCardValue card
     
@@ -95,14 +95,15 @@ let calcScore (hand: Hand) : Status =
                 else accumulator + getCardValueAceOne element)
                 0
                 (List.sort hand)
+                
+    getHandValue hand |> Score
 
-    let handValue = getHandValue hand
-    match handValue with
-    | handValue when handValue < 21 -> Stayed (Score handValue)
-    | handValue when handValue = 21 -> BlackJack
-    | handValue -> Busted (Score handValue)
-    
-            
+let getStatus hand =
+    let score = calcScore hand
+    match score with
+    | score when score < Score 21 -> Stayed (score)
+    | score when score = Score 21 -> BlackJack
+    | score -> Busted (score)
 
 // https://github.com/todoa2c/blackjack-fsharp
 // https://github.com/dudeNumber4/fsharp-blackjack
