@@ -3,7 +3,7 @@ module BlackJack.Domain
 type Suit = Hearts | Spades | Diamonds | Clubs
 type Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
 type Card = { Rank: Rank; Suit: Suit }
-type Points = Hard of int | Soft of int * int
+//type Points = Hard of int | Soft of int * int
 
 type Deck = Card list
 type Hand = Card list
@@ -62,45 +62,50 @@ let setupPlayer : SetupPlayerOptFcn =
             return {Hand = hand; Id = id; Status = CardsDealt}, deck
         }
 
-let calcScore (hand: Hand) : Score =
-    let getCardValueSoft card =
-        match card.Rank with
-        | Two -> 2
-        | Three -> 3
-        | Four -> 4
-        | Five -> 5
-        | Six -> 6
-        | Seven -> 7
-        | Eight -> 8
-        | Nine -> 9
-        | Ten | Jack | Queen | King -> 10
-        | Ace -> 11
+type CalcScore = Hand -> Score
+let calcScore : CalcScore =
+    fun hand ->
+        let getCardValueSoft card =
+            match card.Rank with
+            | Two -> 2
+            | Three -> 3
+            | Four -> 4
+            | Five -> 5
+            | Six -> 6
+            | Seven -> 7
+            | Eight -> 8
+            | Nine -> 9
+            | Ten | Jack | Queen | King -> 10
+            | Ace -> 11
 
-    let getCardValueHard card =
-        match card.Rank with
-        | Ace -> 1
-        | _ -> getCardValueSoft card
-    
-    let getHandValue hand =
-        let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 hand
+        let getCardValueHard card =
+            match card.Rank with
+            | Ace -> 1
+            | _ -> getCardValueSoft card
         
-        if softValue <= 21 then softValue
-        else
-            List.fold (fun accumulator element ->
-                let newValue = accumulator + getCardValueSoft element
-                if newValue < 21 then newValue
-                else accumulator + getCardValueHard element)
-                0
-                (List.sort hand)
-                
-    getHandValue hand |> Score
+        let getHandValue hand =
+            let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 hand
+            
+            if softValue <= 21 then softValue
+            else
+                List.fold (fun accumulator element ->
+                    let newValue = accumulator + getCardValueSoft element
+                    if newValue < 21 then newValue
+                    else accumulator + getCardValueHard element)
+                    0
+                    (List.sort hand)
+                    
+        getHandValue hand |> Score
 
-let getStatus hand =
-    let score = calcScore hand
-    match hand.Length, score with
-    | numberOfCards, score when numberOfCards = 2 && score = Score 21 -> BlackJack
-    | _, score when score <= Score 21 -> Stayed (score)
-    | _, score -> Busted (score)
+type GetStatus = (Status * Hand) -> Status
+let getStatus : GetStatus =
+    fun (status, hand) ->
+        let score = calcScore hand
+        match status, score with
+        | status, score when status = CardsDealt && score = Score 21 -> BlackJack
+        | _, score when score <= Score 21 -> Stayed (score)
+        | _, score -> Busted (score)
+
 
 // https://github.com/todoa2c/blackjack-fsharp
 // https://github.com/dudeNumber4/fsharp-blackjack

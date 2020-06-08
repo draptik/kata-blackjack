@@ -49,30 +49,47 @@ let ``trying to draw a card from an empty deck returns None`` () =
     
 [<Fact>]
 let ``Status and score: below 21`` () =
-    [{ Rank = Two; Suit = Spades }; { Rank = King; Suit = Hearts }]
+    (CardsDealt, [
+        { Rank = Two; Suit = Spades }; 
+        { Rank = King; Suit = Hearts }])
     |> getStatus |> should equal (Stayed (Score 12))
     
 [<Fact>]
 let ``Status and score: below 21 with Ace as 1`` () =
-    [{ Rank = Ace; Suit = Spades }; { Rank = Nine; Suit = Hearts }; { Rank = Five; Suit = Hearts }]
+    (Stayed (Score 0), [
+        { Rank = Ace; Suit = Spades }; 
+        { Rank = Nine; Suit = Hearts }; 
+        { Rank = Five; Suit = Hearts }])
     |> getStatus |> should equal (Stayed (Score 15))
     
 [<Fact>]
 let ``Status and score: below 21 with two Aces`` () =
-    [{ Rank = Ace; Suit = Spades }; { Rank = Nine; Suit = Hearts }; { Rank = Five; Suit = Hearts }; { Rank = Ace; Suit = Clubs }]
+    (Stayed (Score 0), [
+        { Rank = Ace; Suit = Spades }; 
+        { Rank = Nine; Suit = Hearts }; 
+        { Rank = Five; Suit = Hearts }; 
+        { Rank = Ace; Suit = Clubs }])
     |> getStatus |> should equal (Stayed (Score 16))
     
 [<Fact>]
 let ``Status and score: 21 (more than 2 cards)`` () =
-    [{ Rank = Two; Suit = Spades }; { Rank = King; Suit = Hearts }; { Rank = Nine; Suit = Clubs }]
+    (Stayed (Score 0), [
+        { Rank = Two; Suit = Spades }; 
+        { Rank = King; Suit = Hearts }; 
+        { Rank = Nine; Suit = Clubs }])
     |> getStatus |> should equal (Stayed (Score 21))
 
 [<Fact>]
-let ``Status and score: 21 with 2 cards: BlackJack`` () =
-    [{ Rank = Ace; Suit = Spades }; { Rank = King; Suit = Hearts }]
+let ``Status and score: 21 freshly dealt: BlackJack`` () =
+    (CardsDealt, [
+        { Rank = Ace; Suit = Spades }; 
+        { Rank = King; Suit = Hearts }])
     |> getStatus |> should equal (BlackJack)
     
 [<Fact>]
 let ``Status and score: Busted (with correct score)`` () =
-    [{ Rank = Queen; Suit = Spades }; { Rank = King; Suit = Hearts }; { Rank = Five; Suit = Hearts }]
+    (Stayed (Score 0), [
+        { Rank = Queen; Suit = Spades }; 
+        { Rank = King; Suit = Hearts }; 
+        { Rank = Five; Suit = Hearts }])
     |> getStatus |> should equal (Busted (Score 25))
