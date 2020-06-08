@@ -100,10 +100,10 @@ let calcScore (hand: Hand) : Score =
 
 let getStatus hand =
     let score = calcScore hand
-    match score with
-    | score when score < Score 21 -> Stayed (score)
-    | score when score = Score 21 -> BlackJack
-    | score -> Busted (score)
+    match hand.Length, score with
+    | numberOfCards, score when numberOfCards = 2 && score = Score 21 -> BlackJack
+    | _, score when score <= Score 21 -> Stayed (score)
+    | _, score -> Busted (score)
 
 // https://github.com/todoa2c/blackjack-fsharp
 // https://github.com/dudeNumber4/fsharp-blackjack

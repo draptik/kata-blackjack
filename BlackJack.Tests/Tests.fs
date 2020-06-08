@@ -67,7 +67,13 @@ let ``Hand calculation below 21 with two Aces`` () =
     Assert.Equal(Stayed (Score 16), score)
     
 [<Fact>]
-let ``Hand calculation blackjack`` () =
+let ``Hand calculation 21 (more than 2 cards)`` () =
+    let hand = [{ Rank = Two; Suit = Spades }; { Rank = King; Suit = Hearts }; { Rank = Nine; Suit = Clubs }]
+    let score = getStatus hand
+    Assert.Equal(Stayed (Score 21), score)
+
+[<Fact>]
+let ``Hand calculation 21 with 2 cards: BlackJack`` () =
     let hand = [{ Rank = Ace; Suit = Spades }; { Rank = King; Suit = Hearts }]
     let score = getStatus hand
     Assert.Equal(BlackJack, score)
