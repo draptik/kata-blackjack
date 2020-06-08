@@ -49,7 +49,19 @@ let ``trying to draw a card from an empty deck returns None`` () =
     | None -> Assert.True(true)
     
 [<Fact>]
-let ``Hand calculation`` () =
+let ``Hand calculation below 21`` () =
     let hand = [{ Face = Two; Suit = Spades }; { Face = King; Suit = Hearts }]
     let score = calcScore hand
     Assert.Equal(Stayed (Score 12), score)
+    
+[<Fact>]
+let ``Hand calculation blackjack`` () =
+    let hand = [{ Face = Ace; Suit = Spades }; { Face = King; Suit = Hearts }]
+    let score = calcScore hand
+    Assert.Equal(BlackJack, score)
+    
+[<Fact>]
+let ``Hand calculation Busted`` () =
+    let hand = [{ Face = Queen; Suit = Spades }; { Face = King; Suit = Hearts }; { Face = Five; Suit = Hearts }]
+    let score = calcScore hand
+    Assert.Equal(Busted (Score 25), score)
