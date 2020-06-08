@@ -18,10 +18,7 @@ type Actions = Hit | Stay
 type Game = { Deck: Deck; Dealer: Dealer; Players: Players }
 
 
-// Face list
 let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
- 
-// Suit list
 let allSuits = [Diamonds; Hearts; Clubs; Spades]
 
 // extended list comprehension
