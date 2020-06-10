@@ -106,7 +106,7 @@ let getStatus : GetStatus =
         | _, score when score <= Score 21 -> Stayed (score)
         | _, score -> Busted (score)
 
-
+// RESOURCES -----------------------------------------------
 // https://github.com/todoa2c/blackjack-fsharp
 // https://github.com/dudeNumber4/fsharp-blackjack
 // https://github.com/defshef/defshef-blackjack/tree/master/fsharp
