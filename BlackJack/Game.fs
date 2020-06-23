@@ -70,10 +70,17 @@ Game states
 type Initial = Initial
 type GameStarted = GameStarted
 type CardsDealt = CardsDealt
-type PlayerTurn = PlayerTurn
+
 type PlayerFinished = Stand of Score | Busted of Score
+type CurrentHand = CurrentHand
+
+type PlayerTurn =
+    | InitialCardsDealt
+    | CurrentHand
+    | PlayerFinished of PlayerFinished
+
 type DealerTurn = DealerTurn
-type DealerFinished = Stand of Score | Busted of Score
+type DealerFinished = FinalHand
 type GameOver = GameOver
 
 type Game =
