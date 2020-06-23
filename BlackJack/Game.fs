@@ -1,4 +1,6 @@
 module BlackJack.Game
+open BlackJack
+open Domain
 
 (*
     RULES from
@@ -8,51 +10,85 @@ module BlackJack.Game
     Glossary:
         "hit" == "draw a card"
         "stand": player "freezes" his hand
+*)
 
-Idea for game states:
+(*
 
 Game states
 
-- start game
+- "Initial"
     - only when: initial
     - register players
     - create deck
-    -> returned state: GameStarted
-    
-- deal cards
-    - only when: GameStarted
+    -> returned state: "GameStarted"
+
+- "GameStarted"
+    - only when: "GameStarted"
     - each player is dealt 2 cards
     - dealer is dealt 2 cards
-    -> returned state: CardsDealt
+    -> returned state: "CardsDealt"
 
-- "Players play"
+- TODO "PlayersTurn" (multiplayer version)
     - only when: CardsDealt
-
     - player turn
         - only when: ??
         - each player can hit multiple times ("recursive")
-            -> returned state is either
-                - hit again -> "player turn" (recursion)
+            -> returned PlayerState is either
+                - hit again -> "player turn ??" (recursion)
                 - Stand: player wants this to be his final score
                 - Busted: hand score is larger than 21
 
-    -> returned state: AllPlayersFinished (all players are either Busted and/or Stand)
+    -> returned state: "AllPlayersFinished" (all players are either Busted and/or Stand)
 
-- dealer turn
-    - only when: all players have completed their hands (PlayersFinished)
+- "PlayerTurn" (single player mode)
+    - only when: "CardsDealt"
+    - player can hit multiple times ("recursive")
+        -> returned PlayerState is either
+            - hit again -> "player turn ??" (recursion)
+            - Stand: player wants this to be his final score
+            - Busted: hand score is larger than 21
+    -> returned state: "PlayerFinished" (either Busted or Stand)
+
+- "DealerTurn"
+    - only when: "PlayerFinished" (single player mode) / PlayersFinished (multiple player mode)
     - must hit until hand score <= 17
     - dealer can't hit when hand score is >= 17
     - dealer must hit on "soft" 17 (ace and one or more other cards totaling six)
-    -> returned state is
+    -> returned state is "DealerFinished" with internal states
         - DealerStand
         - DealerBusted
         
-- determine winner
-    - only when: DealerStand or DealerBusted 
+- "GameOver"
+    - only when: "DealerFinished" 
     - DealerBusted -> all remaining players win (determine 'remaining' players?)
     - all remaining players closer to 21 win than the dealer
     -
      tie between dealer and players -> Tie (aka stand off, push, tie, égalité, en cartes)
-           
 *)
 
+(* States ----------------------------------------------- *)
+type Initial = Initial
+type GameStarted = GameStarted
+type CardsDealt = CardsDealt
+type PlayerTurn = PlayerTurn
+type PlayerFinished = Stand of Score | Busted of Score
+type DealerTurn = DealerTurn
+type DealerFinished = Stand of Score | Busted of Score
+type GameOver = GameOver
+
+type Game =
+    | Initial
+    | GameStarded
+    | CardsDealt
+    | PlayerTurn
+    | PlayerFinished
+    | DealerTurn
+    | DealerFinished
+    | GameOver
+
+(* State Transitions -------------------------------------*)
+type RegisterPlayers = Initial -> GameStarted
+type DealInitialCards = GameStarted -> CardsDealt
+
+type PlayerStartPlaying = CardsDealt -> PlayerTurn
+type PlayerPlaying = PlayerTurn -> PlayerTurn
