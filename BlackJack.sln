@@ -7,6 +7,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BlackJack", "BlackJack\Blac
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BlackJack.Tests", "BlackJack.Tests\BlackJack.Tests.fsproj", "{220E4BBA-6C64-4269-BCDE-47A783DC285F}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BlackJack.Ui", "BlackJack.Ui\BlackJack.Ui.fsproj", "{987F702A-C4BF-431E-9912-89CC329DBF76}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,17 @@ Global
 		{220E4BBA-6C64-4269-BCDE-47A783DC285F}.Release|x64.Build.0 = Release|Any CPU
 		{220E4BBA-6C64-4269-BCDE-47A783DC285F}.Release|x86.ActiveCfg = Release|Any CPU
 		{220E4BBA-6C64-4269-BCDE-47A783DC285F}.Release|x86.Build.0 = Release|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Debug|x64.Build.0 = Debug|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Debug|x86.Build.0 = Debug|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Release|x64.ActiveCfg = Release|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Release|x64.Build.0 = Release|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Release|x86.ActiveCfg = Release|Any CPU
+		{987F702A-C4BF-431E-9912-89CC329DBF76}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
