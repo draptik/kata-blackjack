@@ -10,7 +10,8 @@ type Hand = Card list
 type Score = Score of int
 type Status = BlackJack | Busted of Score | Stayed of Score | CardsDealt
 type Dealer = { Hand: Hand; Status: Status }
-type Player = { Hand: Hand; Status: Status; Id: int }
+type PlayerId = PlayerId of int
+type Player = { Hand: Hand; Status: Status; Id: PlayerId }
 type Players = Player list
 
 type Actions = Hit | Stay
@@ -49,7 +50,7 @@ type MaybeBuilder() =
     member this.Return value =
         Some value
 
-type SetupPlayerOptFcn = DrawCardFcn -> int -> Deck -> (Player * Deck) option         
+type SetupPlayerOptFcn = DrawCardFcn -> PlayerId -> Deck -> (Player * Deck) option         
 let setupPlayer : SetupPlayerOptFcn =
     fun drawCard id deck ->
         let maybe = MaybeBuilder ()

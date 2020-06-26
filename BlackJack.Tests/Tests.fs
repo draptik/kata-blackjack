@@ -21,7 +21,7 @@ let ``drawing a card from the deck reduces number of cards in deck by one`` () =
 [<Fact>]
 let ``setup player has 2 cards and deck has 50 cards`` () =
     let deck = createDeck
-    let result = setupPlayer drawCard 1 deck
+    let result = setupPlayer drawCard (PlayerId 1) deck
     match result with
     | None -> isFalse
     | Some (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
@@ -29,11 +29,11 @@ let ``setup player has 2 cards and deck has 50 cards`` () =
 [<Fact>]
 let ``setup 2 players: each player has 2 cards and deck has 48 cards`` () =
     let deck = createDeck
-    let result1 = setupPlayer drawCard 1 deck
+    let result1 = setupPlayer drawCard (PlayerId 1) deck
     match result1 with
     | None -> isFalse
     | Some (p1, d1) ->
-        let result2 = setupPlayer drawCard 2 d1
+        let result2 = setupPlayer drawCard (PlayerId 2) d1
         match result2 with
         | None -> isFalse
         | Some (p2, d2) ->
