@@ -93,3 +93,14 @@ let ``Status and score: Busted (with correct score)`` () =
         { Rank = King; Suit = Hearts }; 
         { Rank = Five; Suit = Hearts }])
     |> getStatus |> should equal (Busted (Score 25))
+
+
+
+
+[<Fact>]
+let ``setup dealer has 2 cards and deck has 50 cards`` () =
+    let deck = createDeck
+    let result = setupDealer drawCard deck
+    match result with
+    | None -> isFalse
+    | Some (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)

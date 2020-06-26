@@ -63,6 +63,20 @@ let setupPlayer : SetupPlayerOptFcn =
             return {Hand = hand; Id = id; Status = CardsDealt}, deck
         }
 
+type SetupDealerOptFcn = DrawCardFcn -> Deck -> (Dealer * Deck) option         
+let setupDealer : SetupDealerOptFcn =
+    fun drawCard deck ->
+        let maybe = MaybeBuilder ()
+
+        maybe {
+            let! firstCard, deck = drawCard deck
+            let! secondCard, deck = drawCard deck
+            let hand = [firstCard; secondCard]
+
+            return {Hand = hand; Status = CardsDealt}, deck
+        }
+
+
 type CalcScore = Hand -> Score
 let calcScore : CalcScore =
     fun hand ->
