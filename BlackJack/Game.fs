@@ -67,21 +67,28 @@ Game states
 *)
 
 (* States ----------------------------------------------- *)
-type Initial = Initial
-type GameStarted = GameStarted
-type CardsDealt = CardsDealt
+type Undefined = exn
+
+type Initial = Undefined
+type GameStarted = Undefined
+
+type SomebodyHasBlackJack = PlayerHasBlackJack | DealerHasBlackJack
+type InitialCardsDealt = Undefined
+type CardsDealt = 
+    | InitialCardsDealt of InitialCardsDealt
+    | SomebodyHasBlackJack of SomebodyHasBlackJack
 
 type PlayerFinished = Stand of Score | Busted of Score
-type CurrentHand = CurrentHand
+type CurrentHand = Undefined
 
 type PlayerTurn =
     | InitialCardsDealt
     | CurrentHand
     | PlayerFinished of PlayerFinished
 
-type DealerTurn = DealerTurn
-type DealerFinished = FinalHand
-type GameOver = GameOver
+type DealerTurn = Undefined
+type DealerFinished = Undefined
+type GameOver = Undefined
 
 type Game =
     | Initial
@@ -97,5 +104,16 @@ type Game =
 type RegisterPlayers = Initial -> GameStarted
 type DealInitialCards = GameStarted -> CardsDealt
 
-type PlayerStartPlaying = CardsDealt -> PlayerTurn
-type PlayerPlaying = PlayerTurn -> PlayerTurn
+// transitions after CardsDealt
+type PlayerStartPlaying = InitialCardsDealt -> PlayerTurn
+type DetermineWinnerAfterCardsDealt = SomebodyHasBlackJack -> GameOver
+
+// transitions after PlayerTurn
+type PlayerPlaying = CurrentHand -> PlayerTurn
+type PlayerFinishes = PlayerTurn -> PlayerFinished
+
+type DealerStartPlaying = PlayerFinished -> DealerTurn
+type DealerPlaying = DealerTurn -> DealerTurn
+type DealerFinishes = DealerTurn -> DealerFinished
+
+type EndGame = DealerFinished -> GameOver
