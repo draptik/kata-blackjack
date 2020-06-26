@@ -1,4 +1,4 @@
-module Tests
+module DomainTests
 
 open Xunit
 open FsUnit.Xunit
