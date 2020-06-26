@@ -1,8 +1,12 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿open System
 
-open System
+open BlackJack.Domain
+open BlackJack.Game
+
+let printStartMessage =
+    printfn "Welcome to BlackJack %s" Environment.NewLine
 
 [<EntryPoint>]
 let main argv =
-    printfn "Hello World from F#!"
+    printStartMessage
     0 // return an integer exit code
