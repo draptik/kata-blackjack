@@ -9,17 +9,10 @@ let printStartMessage =
 let printShouldNeverHappen s =
     printfn "Should never happen unless the deck has less than 2 cards %s" s
 
-// let showStatus s status =
-//     match status with
-//     | Status.BlackJack -> printfn "%s BlackJack!" s
-//     | Status.Busted (x) -> printfn "%s %A" s x
-//     | Status.Stayed (x) -> printfn "%s %A" s x
-//     | Status.CardsDealt -> printfn "%s ??" s
-
 type PlayerWins = Undefined
 type HouseWins = Undefined
 
-type GameStatus = Started | PlayerPlaying | PlayerBusted | PlayerFinished | DealerPlaying | DealerBusted | DealerFinished
+type GameStatus = Started | PlayerPlaying | PlayerBusted | PlayerFinished | DealerError2 | DealerBusted | DealerFinished
 
 type GameState = {
     Player: Player
@@ -38,53 +31,46 @@ let update gameState action =
     | PlayerHits -> 
         match (drawCard gameState.Deck) with
         | None -> gameState
-        | Some (card, d) -> 
+        | Some (card, deck) -> 
             let newHand = card :: gameState.Player.Hand
-
             let status = getStatus (gameState.Player.Status, newHand)
             let gameStatus =
                 match status with
                 | Status.Busted _ -> PlayerBusted
                 | Status.Stayed _ -> PlayerPlaying
                 | _ -> PlayerPlaying
-
-            let p = { 
-                Id = gameState.Player.Id
-                Hand = newHand
-                Status = status 
-            }
-            
             {
-                Player = p
+                Player = { Id = gameState.Player.Id; Hand = newHand; Status = status }
                 Dealer = gameState.Dealer
-                Deck = d
+                Deck = deck
                 GameStatus = gameStatus
             }
     | PlayerStays -> { gameState with GameStatus = PlayerFinished }
     | DealerPlays ->
-        match (drawCard gameState.Deck) with
-        | None -> gameState
-        | Some (card, d) -> 
-            let newHand = card :: gameState.Dealer.Hand
-
-            let status = getStatus (gameState.Dealer.Status, newHand)
-            let gameStatus =
-                match status with
-                | Status.Busted _ -> DealerBusted
-                | Status.Stayed _ -> DealerPlaying
-                | _ -> DealerPlaying
-
-            let dealer = { 
-                Hand = newHand
-                Status = status 
-            }
-            
+        let dealerResponse = dealerAction { Hand = gameState.Dealer.Hand; Deck = gameState.Deck }
+        match dealerResponse with
+        | DealerResponse.DealerError (error, hand, deck) -> 
             {
                 Player = gameState.Player
-                Dealer = dealer
-                Deck = d
-                GameStatus = gameStatus
+                Dealer = { Hand = hand; Status = gameState.Dealer.Status }
+                Deck = deck
+                GameStatus = DealerError2
             }
+        | DealerResponse.DealerBusted  (score, hand, deck) -> 
+            {
+                Player = gameState.Player
+                Dealer = { Hand = hand; Status = Status.Busted score }
+                Deck = deck
+                GameStatus = DealerBusted
+            }
+        | DealerResponse.DealerStayed (score, hand, deck) -> 
+            {
+                Player = gameState.Player
+                Dealer = { Hand = hand; Status = Stayed score }
+                Deck = deck
+                GameStatus = DealerFinished
+            }
+            
 
 
 [<EntryPoint>]
@@ -101,7 +87,7 @@ let main argv =
         | None -> printShouldNeverHappen "2"
         | Some (dealer, deckAfterDealerInitialization) ->
 
-            let gameState = {
+            let initialGameState = {
                 Player = player
                 Dealer = dealer
                 Deck = deckAfterDealerInitialization
@@ -111,7 +97,12 @@ let main argv =
             printfn "player hand: %A" player.Hand
             printfn "dealer hand: %A" dealer.Hand
 
-
+            let result = update initialGameState PlayerHits
+            match result.GameStatus with
+            | DealerFinished -> printfn "dealer finished"
+            | PlayerFinished -> printfn "player finished"
+            | _ -> printfn "%A" result.GameStatus
+            
             ()
 
     0 // return an integer exit code
