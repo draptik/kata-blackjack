@@ -104,3 +104,20 @@ let ``setup dealer has 2 cards and deck has 50 cards`` () =
     match result with
     | None -> isFalse
     | Some (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
+
+[<Fact>]
+let ``dealerAction 1`` () =
+    let initialDeck = [
+        { Rank = Queen; Suit = Spades }; 
+        { Rank = Seven; Suit = Hearts };
+        { Rank = King; Suit = Hearts }; 
+        ]
+
+    let dealerOpt = setupDealer drawCard initialDeck
+    match dealerOpt with
+    | None -> isFalse
+    | Some (dealer, deck) ->
+        let dealerResponse = dealerAction { Hand = dealer.Hand; Deck = deck }
+        match dealerResponse with
+        | DealerStayed x -> x |> should equal (Score 17)
+        | _ -> isFalse

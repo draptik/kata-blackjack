@@ -121,6 +121,27 @@ let getStatus : GetStatus =
         | _, score when score <= Score 21 -> Stayed (score)
         | _, score -> Busted (score)
 
+type DealerResponse =
+    | DealerError of string
+    | DealerBusted of Score
+    | DealerStayed of Score
+
+type DealerRecord = {
+    Hand: Hand
+    Deck: Deck
+}
+
+let rec dealerAction dealerRecord =
+    let score = calcScore dealerRecord.Hand
+    match score with
+    | x when x > Score 21 -> DealerBusted score
+    | x when x >= Score 17 -> DealerStayed score
+    | _ ->
+        match drawCard dealerRecord.Deck with
+        | None -> DealerError "unable to draw a card" 
+        | Some (card, d) -> dealerAction { Hand = card::dealerRecord.Hand; Deck = d }
+
+
 // RESOURCES -----------------------------------------------
 // https://github.com/todoa2c/blackjack-fsharp
 // https://github.com/dudeNumber4/fsharp-blackjack
