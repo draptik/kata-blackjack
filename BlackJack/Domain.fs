@@ -122,9 +122,9 @@ let getStatus : GetStatus =
         | _, score -> Busted (score)
 
 type DealerResponse =
-    | DealerError of string
-    | DealerBusted of Score
-    | DealerStayed of Score
+    | DealerError of (string * Hand * Deck)
+    | DealerBusted of (Score * Hand * Deck)
+    | DealerStayed of (Score * Hand * Deck)
 
 type DealerRecord = {
     Hand: Hand
@@ -134,11 +134,11 @@ type DealerRecord = {
 let rec dealerAction dealerRecord =
     let score = calcScore dealerRecord.Hand
     match score with
-    | x when x > Score 21 -> DealerBusted score
-    | x when x >= Score 17 -> DealerStayed score
+    | x when x > Score 21 -> DealerBusted (score, dealerRecord.Hand, dealerRecord.Deck)
+    | x when x >= Score 17 -> DealerStayed (score, dealerRecord.Hand, dealerRecord.Deck)
     | _ ->
         match drawCard dealerRecord.Deck with
-        | None -> DealerError "unable to draw a card" 
+        | None -> DealerError ("unable to draw a card", dealerRecord.Hand, dealerRecord.Deck) 
         | Some (card, d) -> dealerAction { Hand = card::dealerRecord.Hand; Deck = d }
 
 
