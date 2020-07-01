@@ -119,5 +119,5 @@ let ``dealerAction 1`` () =
     | Some (dealer, deck) ->
         let dealerResponse = dealerAction { Hand = dealer.Hand; Deck = deck }
         match dealerResponse with
-        | DealerStayed x -> x |> should equal (Score 17)
+        | DealerStayed (x, _, _) -> x |> should equal (Score 17)
         | _ -> isFalse
