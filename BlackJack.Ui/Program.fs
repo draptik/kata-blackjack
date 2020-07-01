@@ -71,6 +71,8 @@ type Action =
 //                 GameStatus = DealerFinished
 //             }
 
+type PlayerLoopResult = PlayerLoopError | PlayerLoopBusted of Score | PlayerLoopFinished of (Hand * Deck)
+
 let playerLoop handStatus deck hand =
     let rec promptPlay handstatusInternal handInternal deckInternal =
         printf "Current Hand:"
@@ -80,12 +82,12 @@ let playerLoop handStatus deck hand =
         match playerChoice with
         | "1" -> 
             match drawCardToHand (deckInternal, handInternal) with
-            | None -> PlayerError
+            | None -> PlayerLoopError
             | Some (newDeck, newHand) ->
                 match getStatus (handstatusInternal, newHand) with
-                | HandStatus.Busted score -> PlayerBusted score
+                | HandStatus.Busted score -> PlayerLoopBusted score
                 | _ -> promptPlay handstatusInternal newHand newDeck
-        | "2" -> PlayerFinished (handInternal, deckInternal)
+        | "2" -> PlayerLoopFinished (handInternal, deckInternal)
         | _ ->
             printfn "Unknown choice"
             promptPlay handstatusInternal handInternal deckInternal
@@ -115,10 +117,10 @@ let main argv =
             printfn "initial player hand: %A" player.Hand
             printfn "initial dealer hand: %A" dealer.Hand
 
-            let playerResult = playerLoop player.HandStatus deckAfterDealerInitialization player.Hand
-            match playerResult with
-            | PlayerBusted score -> printfn "playerResult (busted): %A" score
-            | PlayerFinished (hand, deck) -> 
+            let playerLoopResult = playerLoop player.HandStatus deckAfterDealerInitialization player.Hand
+            match playerLoopResult with
+            | PlayerLoopBusted score -> printfn "playerResult (busted): %A" score
+            | PlayerLoopFinished (hand, deck) -> 
                 printfn "playerResult (stayed): %A" hand
 
             | _ -> printf "end"
