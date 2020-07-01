@@ -73,7 +73,7 @@ type Action =
 
 type PlayerLoopResult = PlayerLoopError | PlayerLoopBusted of Score | PlayerLoopFinished of (Hand * Deck)
 
-let playerLoop handStatus deck hand =
+let playerLoop player deck =
     let rec promptPlay handstatusInternal handInternal deckInternal =
         printf "Current Hand:"
         printfn "%A" handInternal
@@ -86,12 +86,38 @@ let playerLoop handStatus deck hand =
             | Some (newDeck, newHand) ->
                 match getStatus (handstatusInternal, newHand) with
                 | HandStatus.Busted score -> PlayerLoopBusted score
-                | _ -> promptPlay handstatusInternal newHand newDeck
+                | HandStatus.Stayed score -> promptPlay (HandStatus.Stayed score) newHand newDeck
+                | _ -> PlayerLoopError
         | "2" -> PlayerLoopFinished (handInternal, deckInternal)
         | _ ->
             printfn "Unknown choice"
             promptPlay handstatusInternal handInternal deckInternal
-    promptPlay handStatus hand deck
+    promptPlay player.HandStatus player.Hand deck
+
+let dealerTurn gameState =
+    let dealerResponse = dealerAction { Hand = gameState.Dealer.Hand; Deck = gameState.Deck }
+    match dealerResponse with
+    | DealerResponse.DealerError (error, hand, deck) -> 
+        {
+            Player = gameState.Player
+            Dealer = { Hand = hand; HandStatus = gameState.Dealer.HandStatus }
+            Deck = deck
+            GameStatus = DealerError2
+        }
+    | DealerResponse.DealerBusted  (score, hand, deck) -> 
+        {
+            Player = gameState.Player
+            Dealer = { Hand = hand; HandStatus = HandStatus.Busted score }
+            Deck = deck
+            GameStatus = DealerBusted
+        }
+    | DealerResponse.DealerStayed (score, hand, deck) -> 
+        {
+            Player = gameState.Player
+            Dealer = { Hand = hand; HandStatus = HandStatus.Stayed score }
+            Deck = deck
+            GameStatus = DealerFinished
+        }
 
 [<EntryPoint>]
 let main argv =
@@ -117,7 +143,7 @@ let main argv =
             printfn "initial player hand: %A" player.Hand
             printfn "initial dealer hand: %A" dealer.Hand
 
-            let playerLoopResult = playerLoop player.HandStatus deckAfterDealerInitialization player.Hand
+            let playerLoopResult = playerLoop player deckAfterDealerInitialization
             match playerLoopResult with
             | PlayerLoopBusted score -> printfn "playerResult (busted): %A" score
             | PlayerLoopFinished (hand, deck) -> 
