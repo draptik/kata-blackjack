@@ -12,7 +12,7 @@ let printShouldNeverHappen s =
 type PlayerWins = Undefined
 type HouseWins = Undefined
 
-type GameStatus = Started | PlayerPlaying | PlayerBusted | PlayerFinished | DealerError2 | DealerBusted | DealerFinished
+type GameStatus = Started | PlayerPlaying | PlayerBusted of Score | PlayerFinished of (Hand * Deck) | PlayerError | DealerError2 | DealerBusted | DealerFinished
 
 type GameState = {
     Player: Player
@@ -26,52 +26,70 @@ type Action =
     | PlayerStays
     | DealerPlays
 
-let update gameState action =
-    match action with
-    | PlayerHits -> 
-        match (drawCard gameState.Deck) with
-        | None -> gameState
-        | Some (card, deck) -> 
-            let newHand = card :: gameState.Player.Hand
-            let status = getStatus (gameState.Player.Status, newHand)
-            let gameStatus =
-                match status with
-                | Status.Busted _ -> PlayerBusted
-                | Status.Stayed _ -> PlayerPlaying
-                | _ -> PlayerPlaying
-            {
-                Player = { Id = gameState.Player.Id; Hand = newHand; Status = status }
-                Dealer = gameState.Dealer
-                Deck = deck
-                GameStatus = gameStatus
-            }
-    | PlayerStays -> { gameState with GameStatus = PlayerFinished }
-    | DealerPlays ->
-        let dealerResponse = dealerAction { Hand = gameState.Dealer.Hand; Deck = gameState.Deck }
-        match dealerResponse with
-        | DealerResponse.DealerError (error, hand, deck) -> 
-            {
-                Player = gameState.Player
-                Dealer = { Hand = hand; Status = gameState.Dealer.Status }
-                Deck = deck
-                GameStatus = DealerError2
-            }
-        | DealerResponse.DealerBusted  (score, hand, deck) -> 
-            {
-                Player = gameState.Player
-                Dealer = { Hand = hand; Status = Status.Busted score }
-                Deck = deck
-                GameStatus = DealerBusted
-            }
-        | DealerResponse.DealerStayed (score, hand, deck) -> 
-            {
-                Player = gameState.Player
-                Dealer = { Hand = hand; Status = Stayed score }
-                Deck = deck
-                GameStatus = DealerFinished
-            }
-            
+// let update gameState action =
+//     match action with
+//     | PlayerHits -> 
+//         match (drawCard gameState.Deck) with
+//         | None -> gameState
+//         | Some (card, deck) -> 
+//             let newHand = card :: gameState.Player.Hand
+//             let status = getStatus (gameState.Player.Status, newHand)
+//             let gameStatus =
+//                 match status with
+//                 | Status.Busted _ -> PlayerBusted
+//                 | Status.Stayed _ -> PlayerPlaying
+//                 | _ -> PlayerPlaying
+//             {
+//                 Player = { Id = gameState.Player.Id; Hand = newHand; Status = status }
+//                 Dealer = gameState.Dealer
+//                 Deck = deck
+//                 GameStatus = gameStatus
+//             }
+//     | PlayerStays -> { gameState with GameStatus = PlayerFinished }
+//     | DealerPlays ->
+//         let dealerResponse = dealerAction { Hand = gameState.Dealer.Hand; Deck = gameState.Deck }
+//         match dealerResponse with
+//         | DealerResponse.DealerError (error, hand, deck) -> 
+//             {
+//                 Player = gameState.Player
+//                 Dealer = { Hand = hand; Status = gameState.Dealer.Status }
+//                 Deck = deck
+//                 GameStatus = DealerError2
+//             }
+//         | DealerResponse.DealerBusted  (score, hand, deck) -> 
+//             {
+//                 Player = gameState.Player
+//                 Dealer = { Hand = hand; Status = Status.Busted score }
+//                 Deck = deck
+//                 GameStatus = DealerBusted
+//             }
+//         | DealerResponse.DealerStayed (score, hand, deck) -> 
+//             {
+//                 Player = gameState.Player
+//                 Dealer = { Hand = hand; Status = Stayed score }
+//                 Deck = deck
+//                 GameStatus = DealerFinished
+//             }
 
+let playerLoop handStatus deck hand =
+    let rec promptPlay handstatusInternal handInternal deckInternal =
+        printf "Current Hand:"
+        printfn "%A" handInternal
+        printfn "What do you want to do? (1) Hit or (2) Stand?"
+        let playerChoice = Console.ReadLine().Trim()
+        match playerChoice with
+        | "1" -> 
+            match drawCardToHand (deckInternal, handInternal) with
+            | None -> PlayerError
+            | Some (newDeck, newHand) ->
+                match getStatus (handstatusInternal, newHand) with
+                | HandStatus.Busted score -> PlayerBusted score
+                | _ -> promptPlay handstatusInternal newHand newDeck
+        | "2" -> PlayerFinished (handInternal, deckInternal)
+        | _ ->
+            printfn "Unknown choice"
+            promptPlay handstatusInternal handInternal deckInternal
+    promptPlay handStatus hand deck
 
 [<EntryPoint>]
 let main argv =
@@ -87,21 +105,29 @@ let main argv =
         | None -> printShouldNeverHappen "2"
         | Some (dealer, deckAfterDealerInitialization) ->
 
-            let initialGameState = {
-                Player = player
-                Dealer = dealer
-                Deck = deckAfterDealerInitialization
-                GameStatus = Started
-            }
+            // let initialGameState = {
+            //     Player = player
+            //     Dealer = dealer
+            //     Deck = deckAfterDealerInitialization
+            //     GameStatus = Started
+            // }
 
-            printfn "player hand: %A" player.Hand
-            printfn "dealer hand: %A" dealer.Hand
+            printfn "initial player hand: %A" player.Hand
+            printfn "initial dealer hand: %A" dealer.Hand
 
-            let result = update initialGameState PlayerHits
-            match result.GameStatus with
-            | DealerFinished -> printfn "dealer finished"
-            | PlayerFinished -> printfn "player finished"
-            | _ -> printfn "%A" result.GameStatus
+            let playerResult = playerLoop player.HandStatus deckAfterDealerInitialization player.Hand
+            match playerResult with
+            | PlayerBusted score -> printfn "playerResult (busted): %A" score
+            | PlayerFinished (hand, deck) -> 
+                printfn "playerResult (stayed): %A" hand
+
+            | _ -> printf "end"
+            
+            // let result = update initialGameState playerAction
+            // match result.GameStatus with
+            // | DealerFinished -> printfn "dealer finished"
+            // | PlayerFinished -> printfn "player finished"
+            // | _ -> printfn "%A" result.GameStatus
             
             ()
 

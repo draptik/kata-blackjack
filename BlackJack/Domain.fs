@@ -8,10 +8,10 @@ type Card = { Rank: Rank; Suit: Suit }
 type Deck = Card list
 type Hand = Card list
 type Score = Score of int
-type Status = BlackJack | Busted of Score | Stayed of Score | CardsDealt
-type Dealer = { Hand: Hand; Status: Status }
+type HandStatus = BlackJack | Busted of Score | Stayed of Score | CardsDealt
+type Dealer = { Hand: Hand; HandStatus: HandStatus }
 type PlayerId = PlayerId of int
-type Player = { Hand: Hand; Status: Status; Id: PlayerId }
+type Player = { Hand: Hand; HandStatus: HandStatus; Id: PlayerId }
 type Players = Player list
 
 type Actions = Hit | Stay
@@ -41,6 +41,13 @@ let drawCard : DrawCardFcn =
         | [] -> None
         | topCard::restOfDeck -> Some (topCard, restOfDeck)
 
+type DrawCardToHandFcn = (Deck * Hand) -> (Deck * Hand) option
+let drawCardToHand : DrawCardToHandFcn =
+    fun (deck, hand) ->
+        match drawCard deck with
+        | None -> None
+        | Some (card, modifiedDeck) -> Some (modifiedDeck, card :: hand)
+
 type MaybeBuilder() =
     member this.Bind(input, func) =
         match input with
@@ -60,7 +67,7 @@ let setupPlayer : SetupPlayerOptFcn =
             let! secondCard, deck = drawCard deck
             let hand = [firstCard; secondCard]
 
-            return {Hand = hand; Id = id; Status = CardsDealt}, deck
+            return {Hand = hand; Id = id; HandStatus = CardsDealt}, deck
         }
 
 type SetupDealerOptFcn = DrawCardFcn -> Deck -> (Dealer * Deck) option         
@@ -73,7 +80,7 @@ let setupDealer : SetupDealerOptFcn =
             let! secondCard, deck = drawCard deck
             let hand = [firstCard; secondCard]
 
-            return {Hand = hand; Status = CardsDealt}, deck
+            return {Hand = hand; HandStatus = CardsDealt}, deck
         }
 
 
@@ -112,12 +119,12 @@ let calcScore : CalcScore =
                     
         getHandValue hand |> Score
 
-type GetStatus = (Status * Hand) -> Status
+type GetStatus = (HandStatus * Hand) -> HandStatus
 let getStatus : GetStatus =
-    fun (status, hand) ->
+    fun (handStatus, hand) ->
         let score = calcScore hand
-        match status, score with
-        | status, score when status = CardsDealt && score = Score 21 -> BlackJack
+        match handStatus, score with
+        | handStatus, score when handStatus = CardsDealt && score = Score 21 -> BlackJack
         | _, score when score <= Score 21 -> Stayed (score)
         | _, score -> Busted (score)
 
