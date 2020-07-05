@@ -106,6 +106,15 @@ let dealerTurn game =
             GameStatus = DealerFinished
         }
 
+let winnerIsPrint game =
+    printfn "Result is:%s" Environment.NewLine
+    
+    printfn "final player hand: %A" game.Player.Hand
+    printfn "final dealer hand: %A" game.Dealer.Hand
+
+    // mmh this method can can an invalid Hand (ie "Busted"). TODO More Typing required.
+
+
 [<EntryPoint>]
 let main argv =
     printStartMessage
@@ -135,6 +144,8 @@ let main argv =
 
             printfn "final player hand: %A" gameAfterDealerFinished.Player.Hand
             printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
+
+            winnerIsPrint gameAfterDealerFinished
 
             ()
 
