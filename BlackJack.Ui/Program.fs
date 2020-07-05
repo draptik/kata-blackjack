@@ -112,7 +112,8 @@ let winnerIsPrint game =
     printfn "final player hand: %A" game.Player.Hand
     printfn "final dealer hand: %A" game.Dealer.Hand
 
-    // mmh this method can can an invalid Hand (ie "Busted"). TODO More Typing required.
+    // mmh this method can have invalid Hand (ie "Busted"). TODO More Typing required.
+    // found another type hole. Need another type!
 
 
 [<EntryPoint>]
