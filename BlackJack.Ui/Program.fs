@@ -25,6 +25,8 @@ type Game = {
     GameStatus: GameStatus
 }
 
+// TODO: Next step: I'd like to have "Typed" Game-States!
+
 let playerLoop game playerId =
 
     let rec promptPlay handstatusInternal handInternal deckInternal =
