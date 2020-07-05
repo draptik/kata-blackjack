@@ -146,7 +146,7 @@ let main argv =
             let playerLoopResult = playerLoop player deckAfterDealerInitialization
             match playerLoopResult with
             | PlayerLoopBusted score -> printfn "playerResult (busted): %A" score
-            | PlayerLoopFinished (hand, deck) -> 
+            | PlayerLoopFinished (hand, deckAfterPlayerFinished) -> 
                 printfn "playerResult (stayed): %A" hand
 
             | _ -> printf "end"
