@@ -14,7 +14,7 @@ type GameStatus =
     | PlayerBusted
     | PlayerFinished
     | PlayerError 
-    | DealerError2 
+    | DealerError 
     | DealerBusted 
     | DealerFinished
 
@@ -74,7 +74,7 @@ let playerLoop game playerId =
             printfn "Unknown choice"
             promptPlay handstatusInternal handInternal deckInternal
 
-    let player = game.Player // add filter here for multiple players
+    let player = game.Player // add filter here for multiple players here?
     promptPlay player.HandStatus player.Hand game.Deck
 
 let dealerTurn game =
@@ -85,7 +85,7 @@ let dealerTurn game =
             Player = game.Player
             Dealer = { Hand = hand; HandStatus = game.Dealer.HandStatus }
             Deck = deck
-            GameStatus = DealerError2
+            GameStatus = DealerError
         }
     | DealerResponse.DealerBusted  (score, hand, deck) -> 
         {
