@@ -136,26 +136,26 @@ let playerLoop game playerId =
     let player = game.Player // add filter here for multiple players
     promptPlay player.HandStatus player.Hand game.Deck
 
-let dealerTurn gameState =
-    let dealerResponse = dealerAction { Hand = gameState.Dealer.Hand; Deck = gameState.Deck }
+let dealerTurn game =
+    let dealerResponse = dealerAction { Hand = game.Dealer.Hand; Deck = game.Deck }
     match dealerResponse with
     | DealerResponse.DealerError (error, hand, deck) -> 
         {
-            Player = gameState.Player
-            Dealer = { Hand = hand; HandStatus = gameState.Dealer.HandStatus }
+            Player = game.Player
+            Dealer = { Hand = hand; HandStatus = game.Dealer.HandStatus }
             Deck = deck
             GameStatus = DealerError2
         }
     | DealerResponse.DealerBusted  (score, hand, deck) -> 
         {
-            Player = gameState.Player
+            Player = game.Player
             Dealer = { Hand = hand; HandStatus = HandStatus.Busted score }
             Deck = deck
             GameStatus = DealerBusted
         }
     | DealerResponse.DealerStayed (score, hand, deck) -> 
         {
-            Player = gameState.Player
+            Player = game.Player
             Dealer = { Hand = hand; HandStatus = HandStatus.Stayed score }
             Deck = deck
             GameStatus = DealerFinished
