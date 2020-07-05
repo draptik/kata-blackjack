@@ -115,6 +115,14 @@ let winnerIsPrint game =
     // mmh this method can have invalid Hand (ie "Busted"). TODO More Typing required.
     // found another type hole. Need another type!
 
+    let playerScore = calcScore game.Player.Hand
+    let dealerScore = calcScore game.Dealer.Hand
+
+    if playerScore >= dealerScore then
+        printfn "Player wins!"
+    else
+        printfn "Dealer wins!"
+
 
 [<EntryPoint>]
 let main argv =
