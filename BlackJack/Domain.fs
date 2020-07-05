@@ -147,10 +147,3 @@ let rec dealerAction dealerRecord =
         match drawCard dealerRecord.Deck with
         | None -> DealerError ("unable to draw a card", dealerRecord.Hand, dealerRecord.Deck) 
         | Some (card, d) -> dealerAction { Hand = card::dealerRecord.Hand; Deck = d }
-
-
-// RESOURCES -----------------------------------------------
-// https://github.com/todoa2c/blackjack-fsharp
-// https://github.com/dudeNumber4/fsharp-blackjack
-// https://github.com/defshef/defshef-blackjack/tree/master/fsharp
-// https://github.com/leandrosilva/fsharp-learning/blob/master/fsharp-tutorial-jaoo-2009/tutorial/FunctionalTypes/ExerciseSolution.fsx

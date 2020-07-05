@@ -59,3 +59,10 @@ Unhandled exception. System.ComponentModel.Win32Exception (13): Permission denie
 ### VS Code
 
 Ionide works.
+
+## Resources
+
+// https://github.com/todoa2c/blackjack-fsharp
+// https://github.com/dudeNumber4/fsharp-blackjack
+// https://github.com/defshef/defshef-blackjack/tree/master/fsharp
+// https://github.com/leandrosilva/fsharp-learning/blob/master/fsharp-tutorial-jaoo-2009/tutorial/FunctionalTypes/ExerciseSolution.fsx
