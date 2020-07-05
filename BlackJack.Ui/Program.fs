@@ -12,19 +12,27 @@ let printShouldNeverHappen s =
 type PlayerWins = Undefined
 type HouseWins = Undefined
 
-type GameStatus = Started | PlayerPlaying | PlayerBusted of Score | PlayerFinished of (Hand * Deck) | PlayerError | DealerError2 | DealerBusted | DealerFinished
+type GameStatus = 
+    | Started 
+    | PlayerPlaying 
+    | PlayerBusted
+    | PlayerFinished
+    | PlayerError 
+    | DealerError2 
+    | DealerBusted 
+    | DealerFinished
 
-type GameState = {
+type Game = {
     Player: Player
     Dealer: Dealer
     Deck: Deck
     GameStatus: GameStatus
 }
 
-type Action =
-    | PlayerHits
-    | PlayerStays
-    | DealerPlays
+// type Action =
+//     | PlayerHits
+//     | PlayerStays
+//     | DealerPlays
 
 // let update gameState action =
 //     match action with
@@ -71,28 +79,62 @@ type Action =
 //                 GameStatus = DealerFinished
 //             }
 
-type PlayerLoopResult = PlayerLoopError | PlayerLoopBusted of Score | PlayerLoopFinished of (Hand * Deck)
+// type PlayerLoopResult = 
+//     | PlayerLoopError 
+//     | PlayerLoopBusted of Score 
+//     | PlayerLoopFinished of (Hand * Deck)
 
-let playerLoop player deck =
+let playerLoop game playerId =
+
     let rec promptPlay handstatusInternal handInternal deckInternal =
         printf "Current Hand:"
         printfn "%A" handInternal
         printfn "What do you want to do? (1) Hit or (2) Stand?"
+
         let playerChoice = Console.ReadLine().Trim()
         match playerChoice with
         | "1" -> 
+            
             match drawCardToHand (deckInternal, handInternal) with
-            | None -> PlayerLoopError
+            | None -> { game with GameStatus = PlayerError }
+
             | Some (newDeck, newHand) ->
                 match getStatus (handstatusInternal, newHand) with
-                | HandStatus.Busted score -> PlayerLoopBusted score
-                | HandStatus.Stayed score -> promptPlay (HandStatus.Stayed score) newHand newDeck
-                | _ -> PlayerLoopError
-        | "2" -> PlayerLoopFinished (handInternal, deckInternal)
+                | HandStatus.Busted score -> 
+                    {
+                        Player = { 
+                            Id = playerId
+                            HandStatus = handstatusInternal
+                            Hand = newHand
+                         }
+                        Dealer = game.Dealer
+                        Deck = newDeck
+                        GameStatus = PlayerBusted
+                    }
+
+                | HandStatus.Stayed score -> 
+                    // recursion
+                    promptPlay (HandStatus.Stayed score) newHand newDeck
+                | _ -> 
+                    { game with GameStatus = PlayerError}
+
+        | "2" -> 
+            {
+                Player = { 
+                    Id = playerId
+                    HandStatus = handstatusInternal
+                    Hand = handInternal
+                 }
+                Dealer = game.Dealer
+                Deck = deckInternal
+                GameStatus = PlayerFinished
+            }
         | _ ->
             printfn "Unknown choice"
             promptPlay handstatusInternal handInternal deckInternal
-    promptPlay player.HandStatus player.Hand deck
+
+    let player = game.Player // add filter here for multiple players
+    promptPlay player.HandStatus player.Hand game.Deck
 
 let dealerTurn gameState =
     let dealerResponse = dealerAction { Hand = gameState.Dealer.Hand; Deck = gameState.Deck }
@@ -133,23 +175,23 @@ let main argv =
         | None -> printShouldNeverHappen "2"
         | Some (dealer, deckAfterDealerInitialization) ->
 
-            // let initialGameState = {
-            //     Player = player
-            //     Dealer = dealer
-            //     Deck = deckAfterDealerInitialization
-            //     GameStatus = Started
-            // }
-
             printfn "initial player hand: %A" player.Hand
             printfn "initial dealer hand: %A" dealer.Hand
 
-            let playerLoopResult = playerLoop player deckAfterDealerInitialization
-            match playerLoopResult with
-            | PlayerLoopBusted score -> printfn "playerResult (busted): %A" score
-            | PlayerLoopFinished (hand, deckAfterPlayerFinished) -> 
-                printfn "playerResult (stayed): %A" hand
+            let initialGameState = {
+                Player = player
+                Dealer = dealer
+                Deck = deckAfterDealerInitialization
+                GameStatus = Started
+            }
 
-            | _ -> printf "end"
+            let playerLoopResult = playerLoop initialGameState (PlayerId 1)
+            // match playerLoopResult with
+            // | PlayerLoopBusted score -> printfn "playerResult (busted): %A" score
+            // | PlayerLoopFinished (hand, deckAfterPlayerFinished) -> 
+            //     printfn "playerResult (stayed): %A" hand
+
+            // | _ -> printf "end"
             
             // let result = update initialGameState playerAction
             // match result.GameStatus with
