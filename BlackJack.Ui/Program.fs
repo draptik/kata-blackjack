@@ -6,15 +6,11 @@ open BlackJack.Game
 let printStartMessage =
     printfn "Welcome to BlackJack %s" Environment.NewLine
 
-let printShouldNeverHappen s =
+let weWillDealWithErrorHandingLater s =
     printfn "Should never happen unless the deck has less than 2 cards %s" s
-
-type PlayerWins = Undefined
-type HouseWins = Undefined
 
 type GameStatus = 
     | Started 
-    | PlayerPlaying 
     | PlayerBusted
     | PlayerFinished
     | PlayerError 
@@ -106,7 +102,7 @@ let dealerTurn game =
             GameStatus = DealerFinished
         }
 
-let winnerIsPrint game =
+let outputWinner game =
     printfn "Result is:%s" Environment.NewLine
     
     printfn "final player hand: %A" game.Player.Hand
@@ -131,11 +127,11 @@ let main argv =
     let deck = createDeck
     let initializedPlayerOpt = setupPlayer drawCard (PlayerId 1) deck
     match initializedPlayerOpt with
-    | None -> printShouldNeverHappen "1"
+    | None -> weWillDealWithErrorHandingLater "1"
     | Some (player, deckAfterPlayerInitialization) ->
         let initializedDealerOpt = setupDealer drawCard deckAfterPlayerInitialization
         match initializedDealerOpt with
-        | None -> printShouldNeverHappen "2"
+        | None -> weWillDealWithErrorHandingLater "2"
         | Some (dealer, deckAfterDealerInitialization) ->
 
             printfn "initial player hand: %A" player.Hand
@@ -154,7 +150,7 @@ let main argv =
             printfn "final player hand: %A" gameAfterDealerFinished.Player.Hand
             printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
 
-            winnerIsPrint gameAfterDealerFinished
+            outputWinner gameAfterDealerFinished
 
             ()
 
