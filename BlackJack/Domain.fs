@@ -3,21 +3,21 @@ module BlackJack.Domain
 type Suit = Hearts | Spades | Diamonds | Clubs
 type Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
 type Card = { Rank: Rank; Suit: Suit }
-//type Points = Hard of int | Soft of int * int
 
 type Deck = Card list
 type Hand = Card list
 type Score = Score of int
-type HandStatus = BlackJack | Busted of Score | Stayed of Score | CardsDealt
+
+type HandStatus = 
+    | CardsDealt
+    | BlackJack 
+    | Busted of Score 
+    | Stayed of Score 
+
 type Dealer = { Hand: Hand; HandStatus: HandStatus }
+
 type PlayerId = PlayerId of int
 type Player = { Hand: Hand; HandStatus: HandStatus; Id: PlayerId }
-type Players = Player list
-
-type Actions = Hit | Stay
-
-type Game = { Deck: Deck; Dealer: Dealer; Players: Players }
-
 
 let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
 let allSuits = [Diamonds; Hearts; Clubs; Spades]
