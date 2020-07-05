@@ -57,8 +57,8 @@ type MaybeBuilder() =
     member this.Return value =
         Some value
 
-type SetupPlayerOptFcn = DrawCardFcn -> PlayerId -> Deck -> (Player * Deck) option         
-let setupPlayer : SetupPlayerOptFcn =
+type TrySetupPlayerFcn = DrawCardFcn -> PlayerId -> Deck -> (Player * Deck) option         
+let trySetupPlayer : TrySetupPlayerFcn =
     fun drawCard id deck ->
         let maybe = MaybeBuilder ()
 
@@ -70,8 +70,8 @@ let setupPlayer : SetupPlayerOptFcn =
             return {Hand = hand; Id = id; HandStatus = CardsDealt}, deck
         }
 
-type SetupDealerOptFcn = DrawCardFcn -> Deck -> (Dealer * Deck) option         
-let setupDealer : SetupDealerOptFcn =
+type TrySetupDealerFcn = DrawCardFcn -> Deck -> (Dealer * Deck) option         
+let trySetupDealer : TrySetupDealerFcn =
     fun drawCard deck ->
         let maybe = MaybeBuilder ()
 

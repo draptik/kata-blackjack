@@ -125,12 +125,12 @@ let main argv =
     printStartMessage
 
     let deck = createDeck
-    let initializedPlayerOpt = setupPlayer drawCard (PlayerId 1) deck
-    match initializedPlayerOpt with
+    let tryInitializedPlayer = trySetupPlayer drawCard (PlayerId 1) deck
+    match tryInitializedPlayer with
     | None -> weWillDealWithErrorHandingLater "1"
     | Some (player, deckAfterPlayerInitialization) ->
-        let initializedDealerOpt = setupDealer drawCard deckAfterPlayerInitialization
-        match initializedDealerOpt with
+        let tryInitializedDealer = trySetupDealer drawCard deckAfterPlayerInitialization
+        match tryInitializedDealer with
         | None -> weWillDealWithErrorHandingLater "2"
         | Some (dealer, deckAfterDealerInitialization) ->
 
