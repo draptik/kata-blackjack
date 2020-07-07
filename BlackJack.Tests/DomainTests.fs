@@ -13,28 +13,28 @@ let ``a deck has 52 cards initially`` () =
 [<Fact>]
 let ``drawing a card from the deck reduces number of cards in deck by one`` () =
     let deck = createDeck
-    let opt = drawCard deck
-    match opt with
+    let maybeCardDeck = drawCard deck
+    match maybeCardDeck with
     | Some (_, d) -> d.Length |> should equal (deck.Length - 1)
     | _ -> isFalse
 
 [<Fact>]
 let ``setup player has 2 cards and deck has 50 cards`` () =
     let deck = createDeck
-    let result = trySetupPlayer drawCard (PlayerId 1) deck
-    match result with
+    let maybePlayerDeck = trySetupPlayer drawCard (PlayerId 1) deck
+    match maybePlayerDeck with
     | None -> isFalse
     | Some (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
 
 [<Fact>]
 let ``setup 2 players: each player has 2 cards and deck has 48 cards`` () =
     let deck = createDeck
-    let result1 = trySetupPlayer drawCard (PlayerId 1) deck
-    match result1 with
+    let maybePlayerDeck1 = trySetupPlayer drawCard (PlayerId 1) deck
+    match maybePlayerDeck1 with
     | None -> isFalse
     | Some (p1, d1) ->
-        let result2 = trySetupPlayer drawCard (PlayerId 2) d1
-        match result2 with
+        let maybePlayerDeck2 = trySetupPlayer drawCard (PlayerId 2) d1
+        match maybePlayerDeck2 with
         | None -> isFalse
         | Some (p2, d2) ->
             (p1.Hand.Length, p2.Hand.Length, d2.Length) |> should equal (2, 2, 48)
@@ -42,8 +42,8 @@ let ``setup 2 players: each player has 2 cards and deck has 48 cards`` () =
 [<Fact>]
 let ``trying to draw a card from an empty deck returns None`` () =
     let deck = []
-    let result = drawCard deck
-    match result with
+    let maybeCardDeck = drawCard deck
+    match maybeCardDeck with
     | Some _ -> isFalse
     | None -> Assert.True(true)
     
@@ -100,8 +100,8 @@ let ``Status and score: Busted (with correct score)`` () =
 [<Fact>]
 let ``setup dealer has 2 cards and deck has 50 cards`` () =
     let deck = createDeck
-    let result = trySetupDealer drawCard deck
-    match result with
+    let maybeDealerDeck = trySetupDealer drawCard deck
+    match maybeDealerDeck with
     | None -> isFalse
     | Some (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
 
@@ -113,8 +113,8 @@ let ``dealerAction 1`` () =
         { Rank = King; Suit = Hearts }; 
         ]
 
-    let dealerOpt = trySetupDealer drawCard initialDeck
-    match dealerOpt with
+    let maybeDealerDeck = trySetupDealer drawCard initialDeck
+    match maybeDealerDeck with
     | None -> isFalse
     | Some (dealer, deck) ->
         let dealerResponse = dealerAction { Hand = dealer.Hand; Deck = deck }
