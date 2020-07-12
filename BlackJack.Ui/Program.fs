@@ -137,12 +137,12 @@ let main argv =
 
     let deck = createDeck
     let numberOfPlayers = askForNumberOfPlayers
-    let tryInitializedPlayer = trySetupPlayer drawCard (PlayerId 1) deck
-    match tryInitializedPlayer with
+    let maybeInitializedPlayer = trySetupPlayer drawCard (PlayerId 1) deck
+    match maybeInitializedPlayer with
     | None -> weWillDealWithErrorHandingLater "1"
     | Some (player, deckAfterPlayerInitialization) ->
-        let tryInitializedDealer = trySetupDealer drawCard deckAfterPlayerInitialization
-        match tryInitializedDealer with
+        let maybeInitializedDealer = trySetupDealer drawCard deckAfterPlayerInitialization
+        match maybeInitializedDealer with
         | None -> weWillDealWithErrorHandingLater "2"
         | Some (dealer, deckAfterDealerInitialization) ->
 
