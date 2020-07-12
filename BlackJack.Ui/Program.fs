@@ -121,12 +121,20 @@ let outputWinner game =
     else
         printfn "Dealer wins!"
 
+let askForNumberOfPlayers =
+    printfn "How many players (number between 1 and 3)?"
+    let input = Console.ReadLine().Trim()
+    // is number? is in range?
+    2 // TODO implement
+    
+
 
 [<EntryPoint>]
 let main argv =
     printStartMessage
 
     let deck = createDeck
+    let numberOfPlayers = askForNumberOfPlayers
     let tryInitializedPlayer = trySetupPlayer drawCard (PlayerId 1) deck
     match tryInitializedPlayer with
     | None -> weWillDealWithErrorHandingLater "1"
