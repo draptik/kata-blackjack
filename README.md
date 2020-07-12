@@ -1,6 +1,14 @@
-# Linux IDE FSharp support
+# Blackjack
 
-## 2020-06-23
+## TODOs
+
+- the easy part is implementing the rules for a single hand with a given deck
+- the difficult part is building a clean model for interactive code, with multiple players
+- property-based-testing
+
+## Linux IDE FSharp support
+
+### 2020-06-23
 
 ```sh
 dotnet --info
@@ -33,7 +41,7 @@ Host (useful for support):
   Microsoft.NETCore.App 5.0.0-preview.5.20278.1 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
 ```
 
-### Rider
+#### Rider
 
 TL/DR doesn't seem to work. Use VS Code (or another editor).
 
@@ -56,7 +64,7 @@ Unhandled exception. System.ComponentModel.Win32Exception (13): Permission denie
    at Microsoft.Build.CommandLine.MSBuildApp.Main(String[] args)
 ```
 
-### VS Code
+#### VS Code
 
 Ionide works.
 

@@ -127,7 +127,9 @@ let askForNumberOfPlayers =
     // is number? is in range?
     2 // TODO implement
     
-
+// must return game option    
+// let initializePlayers numberOfPlayers =
+//     trySetupPlayer
 
 [<EntryPoint>]
 let main argv =
