@@ -1,4 +1,5 @@
 ﻿open System
+open System.Text.RegularExpressions
 
 open BlackJack.Domain
 open BlackJack.Game
@@ -19,7 +20,7 @@ type GameStatus =
     | DealerFinished
 
 type Game = {
-    Player: Player
+    Players: Player list
     Dealer: Dealer
     Deck: Deck
     GameStatus: GameStatus
@@ -43,13 +44,14 @@ let playerLoop game playerId =
 
             | Some (newDeck, newHand) ->
                 match getStatus (handstatusInternal, newHand) with
-                | HandStatus.Busted score -> 
+                | HandStatus.Busted _ ->
+                    let bustedPlayer = { Id = playerId; HandStatus = handstatusInternal; Hand = newHand }
+                    let players = 
+                        game.Players 
+                        |> List.map (fun p -> if p.Id = playerId then bustedPlayer else p)
+
                     {
-                        Player = { 
-                            Id = playerId
-                            HandStatus = handstatusInternal
-                            Hand = newHand
-                         }
+                        Players = players
                         Dealer = game.Dealer
                         Deck = newDeck
                         GameStatus = PlayerBusted
@@ -63,11 +65,7 @@ let playerLoop game playerId =
 
         | "2" -> 
             {
-                Player = { 
-                    Id = playerId
-                    HandStatus = handstatusInternal
-                    Hand = handInternal
-                 }
+                Players = game.Players
                 Dealer = game.Dealer
                 Deck = deckInternal
                 GameStatus = PlayerFinished
@@ -76,7 +74,7 @@ let playerLoop game playerId =
             printfn "Unknown choice"
             promptPlay handstatusInternal handInternal deckInternal
 
-    let player = game.Player // add filter here for multiple players here?
+    let player = game.Players |> List.find (fun x -> x.Id = playerId)
     promptPlay player.HandStatus player.Hand game.Deck
 
 let dealerTurn game =
@@ -84,86 +82,129 @@ let dealerTurn game =
     match dealerResponse with
     | DealerResponse.DealerError (error, hand, deck) -> 
         {
-            Player = game.Player
+            Players = game.Players
             Dealer = { Hand = hand; HandStatus = game.Dealer.HandStatus }
             Deck = deck
             GameStatus = DealerError
         }
     | DealerResponse.DealerBusted  (score, hand, deck) -> 
         {
-            Player = game.Player
+            Players = game.Players
             Dealer = { Hand = hand; HandStatus = HandStatus.Busted score }
             Deck = deck
             GameStatus = DealerBusted
         }
     | DealerResponse.DealerStayed (score, hand, deck) -> 
         {
-            Player = game.Player
+            Players = game.Players
             Dealer = { Hand = hand; HandStatus = HandStatus.Stayed score }
             Deck = deck
             GameStatus = DealerFinished
         }
 
-let outputWinner game =
+(*
+
+Determine Winner
+
+Precondition(s): exclude all busted players
+
+- any player stayed, dealer stayed
+    -> player or dealer with highest score wins
+    -> tied for highest score -> no winner
+- any player stayed, dealer busted
+    -> playe with highest score wins
+    -> tied for highest score -> no winner
+       
+- single player blackjack, dealer stayed
+    -> player wins
+- multiple players blackjack, dealer not blackjack
+    -> no winner
+- any player blackjack, dealer blackjack
+    -> no winner
+- no player blackjack, dealer blackjack
+    -> dealer wins
+
+*)
+type Winner =
+    | Player of Player
+    | Dealer of Dealer
+    | Nobody
+
+let determineWinner game =
     printfn "Result is:%s" Environment.NewLine
     
-    printfn "final player hand: %A" game.Player.Hand
+    game.Players |> List.iter (fun x -> printfn "PlayerId: %A final hand: %A " x.Id x.Hand)
     printfn "final dealer hand: %A" game.Dealer.Hand
 
-    // mmh this method can have invalid Hand (ie "Busted"). TODO More Typing required.
-    // found another type hole. Need another type!
+    // let nonBustedPlayers =
+    //     game.Players
+    //     |> List.filter (fun x -> x.HandStatus = Stayed)
 
-    let playerScore = calcScore game.Player.Hand
-    let dealerScore = calcScore game.Dealer.Hand
+    // let blackJackPlayers =
+    //     game.Players
+    //     |> List.filter (fun x -> x.HandStatus = BlackJack)
 
-    if playerScore >= dealerScore then
-        printfn "Player wins!"
-    else
-        printfn "Dealer wins!"
+    Nobody
 
 let askForNumberOfPlayers =
     printfn "How many players (number between 1 and 3)?"
     let input = Console.ReadLine().Trim()
-    // is number? is in range?
-    2 // TODO implement
+
+    let tryToNumberOfPlayers s =
+        let numberCheck = Regex("^(1|2|3)$")    
+        let strContainsOnlyValidNumbers (s:string) = numberCheck.IsMatch s
+        let isValidNumberOfPlayers = strContainsOnlyValidNumbers input
+        match isValidNumberOfPlayers with
+        | true -> Some (System.Int32.Parse input)
+        | false -> None
+
+    tryToNumberOfPlayers input
     
-// must return game option    
-// let initializePlayers numberOfPlayers =
-//     trySetupPlayer
+(* should return game with initialized players (must be at least tuple of players and modified deck) *)
+let initializePlayers numberOfPlayers initialDeck =
+    let playerIds = [1..numberOfPlayers] |> List.map (fun x -> PlayerId x)
+    let maybeInitializedPlayers = playerIds |> List.map (fun x -> trySetupPlayer drawCard x initialDeck)
+    // deck could be empty
+    // TODO: implement
+    0
 
 [<EntryPoint>]
 let main argv =
     printStartMessage
 
     let deck = createDeck
-    let numberOfPlayers = askForNumberOfPlayers
-    let maybeInitializedPlayer = trySetupPlayer drawCard (PlayerId 1) deck
-    match maybeInitializedPlayer with
-    | None -> weWillDealWithErrorHandingLater "1"
-    | Some (player, deckAfterPlayerInitialization) ->
-        let maybeInitializedDealer = trySetupDealer drawCard deckAfterPlayerInitialization
-        match maybeInitializedDealer with
-        | None -> weWillDealWithErrorHandingLater "2"
-        | Some (dealer, deckAfterDealerInitialization) ->
+    let maybeNumberOfPlayers = askForNumberOfPlayers
+    match maybeNumberOfPlayers with
+    | None -> weWillDealWithErrorHandingLater "invalid number of players"
+    
+    | Some numberOfPlayers ->
+        // TODO: implement multiplayer mode
+        let maybeInitializedPlayer = trySetupPlayer drawCard (PlayerId 1) deck
+        match maybeInitializedPlayer with
+        | None -> weWillDealWithErrorHandingLater "problem initializing player"
+        | Some (player, deckAfterPlayerInitialization) ->
+            let maybeInitializedDealer = trySetupDealer drawCard deckAfterPlayerInitialization
+            match maybeInitializedDealer with
+            | None -> weWillDealWithErrorHandingLater "problem initializing dealer"
+            | Some (dealer, deckAfterDealerInitialization) ->
 
-            printfn "initial player hand: %A" player.Hand
-            printfn "initial dealer hand: %A" dealer.Hand
+                printfn "initial player hand: %A" player.Hand
+                printfn "initial dealer hand: %A" dealer.Hand
 
-            let initialGameState = {
-                Player = player
-                Dealer = dealer
-                Deck = deckAfterDealerInitialization
-                GameStatus = Started
-            }
+                let initialGameState = {
+                    Players = [player]
+                    Dealer = dealer
+                    Deck = deckAfterDealerInitialization
+                    GameStatus = Started
+                }
 
-            let gameAfterPlayerFinished = playerLoop initialGameState (PlayerId 1)
-            let gameAfterDealerFinished = dealerTurn gameAfterPlayerFinished
+                let gameAfterPlayerFinished = playerLoop initialGameState (PlayerId 1)
+                let gameAfterDealerFinished = dealerTurn gameAfterPlayerFinished
 
-            printfn "final player hand: %A" gameAfterDealerFinished.Player.Hand
-            printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
+                printfn "final player hand: %A" gameAfterDealerFinished.Players.[0].Hand
+                printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
 
-            outputWinner gameAfterDealerFinished
-
-            ()
+                printfn "Winner is %A" (determineWinner gameAfterDealerFinished)
+                ()
 
     0 // return an integer exit code
