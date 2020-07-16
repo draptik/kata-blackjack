@@ -275,3 +275,22 @@ let ``try to initialize 3 players with minimal deck`` () =
                 HandStatus = CardsDealt 
             }
 
+[<Fact>]
+let ``try to initialize 3 players with understacked deck not enough cards for 3 players`` () =
+    
+    // Arrange
+    let initialDeck = [
+        { Rank = Two; Suit = Spades }
+        { Rank = Three; Suit = Spades }
+        { Rank = Four; Suit = Spades }
+        { Rank = Five; Suit = Spades }
+        { Rank = Six; Suit = Spades }
+        ]
+
+    // Act
+    let opt = tryInitializePlayers (NumberOfPlayers 3) initialDeck
+
+    // Assert
+    match opt with
+    | None -> Assert.True(true) // <- expected
+    | Some -> isFalse

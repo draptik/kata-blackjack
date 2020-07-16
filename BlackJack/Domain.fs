@@ -86,6 +86,7 @@ let trySetupDealer : TrySetupDealerFcn =
 type NumberOfPlayers = NumberOfPlayers of int
 
 // returns (Player list * Deck)
+// TODO: make private (use try wrapper below)
 let initializePlayers numberOfPlayers initialDeck =
     let (NumberOfPlayers n) = numberOfPlayers
     let playerIds = [1..n] |> List.map PlayerId
@@ -105,7 +106,7 @@ let tryInitializePlayers numberOfPlayers initialDeck =
     let isValid = 
         initializedPlayers.Length = requestedNumberOfPlayers
         && deckAfterInitializingAllPlayers.Length = initialDeck.Length - (requestedNumberOfPlayers * numberOfCardsDealtToPlayer)
-    
+
     if isValid then Some (initializedPlayers, deckAfterInitializingAllPlayers)
     else None
 
