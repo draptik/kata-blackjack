@@ -85,6 +85,7 @@ let trySetupDealer : TrySetupDealerFcn =
 
 type NumberOfPlayers = NumberOfPlayers of int
 
+// returns (Player list * Deck)
 let initializePlayers numberOfPlayers initialDeck =
     let (NumberOfPlayers n) = numberOfPlayers
     let playerIds = [1..n] |> List.map PlayerId

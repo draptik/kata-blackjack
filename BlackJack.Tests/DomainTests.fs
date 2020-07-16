@@ -128,13 +128,13 @@ let ``initialize 3 players with minimal deck`` () =
     
     // Arrange
     let initialDeck = [
-        { Rank = Two; Suit = Spades }; 
-        { Rank = Three; Suit = Spades };
-        { Rank = Four; Suit = Spades }; 
-        { Rank = Five; Suit = Spades }; 
-        { Rank = Six; Suit = Spades }; 
-        { Rank = Seven; Suit = Spades }; 
-        { Rank = Eight; Suit = Spades }; 
+        { Rank = Two; Suit = Spades }
+        { Rank = Three; Suit = Spades }
+        { Rank = Four; Suit = Spades }
+        { Rank = Five; Suit = Spades }
+        { Rank = Six; Suit = Spades }
+        { Rank = Seven; Suit = Spades }
+        { Rank = Eight; Suit = Spades }
         ]
 
     // Act
@@ -172,6 +172,48 @@ let ``initialize 3 players with minimal deck`` () =
                 [
                     { Rank = Six; Suit = Spades }
                     { Rank = Seven; Suit = Spades }
+                ]
+            HandStatus = CardsDealt 
+        }
+
+
+[<Fact>]
+let ``initialize 3 players with understacked deck not enough cards for 3 players`` () =
+    
+    // Arrange
+    let initialDeck = [
+        { Rank = Two; Suit = Spades }
+        { Rank = Three; Suit = Spades }
+        { Rank = Four; Suit = Spades }
+        { Rank = Five; Suit = Spades }
+        { Rank = Six; Suit = Spades }
+        ]
+
+    // Act
+    let (players, deck) = initializePlayers (NumberOfPlayers 3) initialDeck
+    
+    // Assert
+    players.Length |> should equal 2
+    deck.Length |> should equal 1
+    deck.[0] |> should equal { Rank = Six; Suit = Spades }
+
+    players.[0] |> should equal 
+        { 
+            Id = PlayerId 1
+            Hand = 
+                [
+                    { Rank = Two; Suit = Spades }
+                    { Rank = Three; Suit = Spades }
+                ]
+            HandStatus = CardsDealt 
+        }
+    players.[1] |> should equal 
+        { 
+            Id = PlayerId 2
+            Hand = 
+                [
+                    { Rank = Four; Suit = Spades }
+                    { Rank = Five; Suit = Spades }
                 ]
             HandStatus = CardsDealt 
         }
