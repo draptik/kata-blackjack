@@ -83,6 +83,16 @@ let trySetupDealer : TrySetupDealerFcn =
             return {Hand = hand; HandStatus = CardsDealt}, deck
         }
 
+let initializePlayers numberOfPlayers initialDeck =
+    let playerIds = [1..numberOfPlayers] |> List.map PlayerId
+    List.fold 
+        (fun (currentPlayers, currentDeck) playerId ->
+            match trySetupPlayer drawCard playerId currentDeck with
+            | Some (player, modifiedDeck) -> (currentPlayers@[player], modifiedDeck)
+            | None -> (currentPlayers, currentDeck))
+        ([], initialDeck)
+        playerIds
+    
 
 type CalcScore = Hand -> Score
 let calcScore : CalcScore =

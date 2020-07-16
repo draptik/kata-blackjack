@@ -159,24 +159,6 @@ let askForNumberOfPlayers =
         | false -> None
 
     tryToNumberOfPlayers input
-    
-(* should return game with initialized players (must be at least tuple of players and modified deck) *)
-let initializePlayers numberOfPlayers initialDeck =
-    let playerIds = [1..numberOfPlayers] |> List.map (fun x -> PlayerId x)
-
-    // let maybeInitializedPlayers ids = 
-    //     let initialState = None
-    //     let result1 =
-    //         List.fold 
-    //             (fun state playerId -> trySetupPlayer drawCard playerId state.Deck)
-    //             (initialState)
-    //             ids
-            
-    // let maybeInitializedPlayers = playerIds |> List.map (fun x -> trySetupPlayer drawCard x initialDeck)
-    
-    // deck could be empty
-    // TODO: implement
-    0
 
 [<EntryPoint>]
 let main argv =

@@ -121,3 +121,57 @@ let ``dealerAction 1`` () =
         match dealerResponse with
         | DealerStayed (x, _, _) -> x |> should equal (Score 17)
         | _ -> isFalse
+
+
+[<Fact>]
+let ``initialize 3 players with minimal deck`` () =
+    
+    // Arrange
+    let initialDeck = [
+        { Rank = Two; Suit = Spades }; 
+        { Rank = Three; Suit = Spades };
+        { Rank = Four; Suit = Spades }; 
+        { Rank = Five; Suit = Spades }; 
+        { Rank = Six; Suit = Spades }; 
+        { Rank = Seven; Suit = Spades }; 
+        { Rank = Eight; Suit = Spades }; 
+        ]
+
+    // Act
+    let (players, deck) = initializePlayers 3 initialDeck
+    
+    // Assert
+    players.Length |> should equal 3
+    deck.Length |> should equal 1
+    deck.[0] |> should equal { Rank = Eight; Suit = Spades }
+
+    players.[0] |> should equal 
+        { 
+            Id = PlayerId 1
+            Hand = 
+                [
+                    { Rank = Two; Suit = Spades }
+                    { Rank = Three; Suit = Spades }
+                ]
+            HandStatus = CardsDealt 
+        }
+    players.[1] |> should equal 
+        { 
+            Id = PlayerId 2
+            Hand = 
+                [
+                    { Rank = Four; Suit = Spades }
+                    { Rank = Five; Suit = Spades }
+                ]
+            HandStatus = CardsDealt 
+        }
+    players.[2] |> should equal 
+        { 
+            Id = PlayerId 3
+            Hand = 
+                [
+                    { Rank = Six; Suit = Spades }
+                    { Rank = Seven; Suit = Spades }
+                ]
+            HandStatus = CardsDealt 
+        }
