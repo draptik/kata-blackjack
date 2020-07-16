@@ -217,3 +217,61 @@ let ``initialize 3 players with understacked deck not enough cards for 3 players
                 ]
             HandStatus = CardsDealt 
         }
+
+[<Fact>]
+let ``try to initialize 3 players with minimal deck`` () =
+    
+    // Arrange
+    let initialDeck = [
+        { Rank = Two; Suit = Spades }
+        { Rank = Three; Suit = Spades }
+        { Rank = Four; Suit = Spades }
+        { Rank = Five; Suit = Spades }
+        { Rank = Six; Suit = Spades }
+        { Rank = Seven; Suit = Spades }
+        { Rank = Eight; Suit = Spades }
+        ]
+
+    // Act
+    let opt = tryInitializePlayers (NumberOfPlayers 3) initialDeck
+    printfn "opt: %A" opt
+    match opt with
+    | None -> isFalse
+    | Some (players, deck) ->
+
+        // Assert
+        players.Length |> should equal 3
+        deck.Length |> should equal 1
+        deck.[0] |> should equal { Rank = Eight; Suit = Spades }
+
+        players.[0] |> should equal 
+            { 
+                Id = PlayerId 1
+                Hand = 
+                    [
+                        { Rank = Two; Suit = Spades }
+                        { Rank = Three; Suit = Spades }
+                    ]
+                HandStatus = CardsDealt 
+            }
+        players.[1] |> should equal 
+            { 
+                Id = PlayerId 2
+                Hand = 
+                    [
+                        { Rank = Four; Suit = Spades }
+                        { Rank = Five; Suit = Spades }
+                    ]
+                HandStatus = CardsDealt 
+            }
+        players.[2] |> should equal 
+            { 
+                Id = PlayerId 3
+                Hand = 
+                    [
+                        { Rank = Six; Suit = Spades }
+                        { Rank = Seven; Suit = Spades }
+                    ]
+                HandStatus = CardsDealt 
+            }
+

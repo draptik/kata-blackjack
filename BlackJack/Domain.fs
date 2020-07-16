@@ -103,8 +103,8 @@ let tryInitializePlayers numberOfPlayers initialDeck =
     let (NumberOfPlayers requestedNumberOfPlayers) = numberOfPlayers
     let numberOfCardsDealtToPlayer = 2
     let isValid = 
-        initializedPlayers.Length = requestedNumberOfPlayers 
-        && deckAfterInitializingAllPlayers.Length = (requestedNumberOfPlayers * numberOfCardsDealtToPlayer) - initialDeck.Length
+        initializedPlayers.Length = requestedNumberOfPlayers
+        && deckAfterInitializingAllPlayers.Length = initialDeck.Length - (requestedNumberOfPlayers * numberOfCardsDealtToPlayer)
     
     if isValid then Some (initializedPlayers, deckAfterInitializingAllPlayers)
     else None
