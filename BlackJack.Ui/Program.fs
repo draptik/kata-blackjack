@@ -136,14 +136,7 @@ let determineWinner game =
     game.Players |> List.iter (fun x -> printfn "PlayerId: %A final hand: %A " x.Id x.Hand)
     printfn "final dealer hand: %A" game.Dealer.Hand
 
-    // let nonBustedPlayers =
-    //     game.Players
-    //     |> List.filter (fun x -> x.HandStatus = Stayed)
-
-    // let blackJackPlayers =
-    //     game.Players
-    //     |> List.filter (fun x -> x.HandStatus = BlackJack)
-
+    // TODO:
     Nobody
 
 let askForNumberOfPlayers =
@@ -155,7 +148,7 @@ let askForNumberOfPlayers =
         let strContainsOnlyValidNumbers (s:string) = numberCheck.IsMatch s
         let isValidNumberOfPlayers = strContainsOnlyValidNumbers input
         match isValidNumberOfPlayers with
-        | true -> Some (System.Int32.Parse input)
+        | true -> Some (NumberOfPlayers (System.Int32.Parse input))
         | false -> None
 
     tryToNumberOfPlayers input
@@ -164,39 +157,32 @@ let askForNumberOfPlayers =
 let main argv =
     printStartMessage
 
-    let deck = createDeck
+    let initialDeck = createDeck
     let maybeNumberOfPlayers = askForNumberOfPlayers
     match maybeNumberOfPlayers with
     | None -> weWillDealWithErrorHandingLater "invalid number of players"
     
     | Some numberOfPlayers ->
-        // TODO: implement multiplayer mode
-        let maybeInitializedPlayer = trySetupPlayer drawCard (PlayerId 1) deck
-        match maybeInitializedPlayer with
-        | None -> weWillDealWithErrorHandingLater "problem initializing player"
-        | Some (player, deckAfterPlayerInitialization) ->
-            let maybeInitializedDealer = trySetupDealer drawCard deckAfterPlayerInitialization
-            match maybeInitializedDealer with
-            | None -> weWillDealWithErrorHandingLater "problem initializing dealer"
-            | Some (dealer, deckAfterDealerInitialization) ->
+        let (players, deckAfterAllPlayersHaveBeenInitialized) = initializePlayers numberOfPlayers initialDeck
+        let maybeInitializedDealer = trySetupDealer drawCard deckAfterAllPlayersHaveBeenInitialized
+        match maybeInitializedDealer with
+        | None -> weWillDealWithErrorHandingLater "problem initializing dealer"
+        | Some (dealer, deckAfterDealerInitialization) ->
 
-                printfn "initial player hand: %A" player.Hand
-                printfn "initial dealer hand: %A" dealer.Hand
+            let initialGameState = {
+                Players = players
+                Dealer = dealer
+                Deck = deckAfterDealerInitialization
+                GameStatus = Started
+            }
 
-                let initialGameState = {
-                    Players = [player]
-                    Dealer = dealer
-                    Deck = deckAfterDealerInitialization
-                    GameStatus = Started
-                }
+            // TODO: implement multiplayer mode
+            let gameAfterPlayerFinished = playerLoop initialGameState (PlayerId 1)
+            let gameAfterDealerFinished = dealerTurn gameAfterPlayerFinished
 
-                let gameAfterPlayerFinished = playerLoop initialGameState (PlayerId 1)
-                let gameAfterDealerFinished = dealerTurn gameAfterPlayerFinished
-
-                printfn "final player hand: %A" gameAfterDealerFinished.Players.[0].Hand
-                printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
-
-                printfn "Winner is %A" (determineWinner gameAfterDealerFinished)
-                ()
+            printfn "final player hand: %A" gameAfterDealerFinished.Players.[0].Hand
+            printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
+            printfn "Winner is %A" (determineWinner gameAfterDealerFinished)
+            ()
 
     0 // return an integer exit code
