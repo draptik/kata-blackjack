@@ -163,26 +163,29 @@ let main argv =
     | None -> weWillDealWithErrorHandlingLater "invalid number of players"
     
     | Some numberOfPlayers ->
-        let (players, deckAfterAllPlayersHaveBeenInitialized) = initializePlayers numberOfPlayers initialDeck
-        let maybeInitializedDealer = trySetupDealer drawCard deckAfterAllPlayersHaveBeenInitialized
-        match maybeInitializedDealer with
-        | None -> weWillDealWithErrorHandlingLater "problem initializing dealer"
-        | Some (dealer, deckAfterDealerInitialization) ->
+        let maybeInitializedPlayers = tryInitializePlayers numberOfPlayers initialDeck
+        match maybeInitializedPlayers with
+        | None -> weWillDealWithErrorHandlingLater "problem initializing players"
+        | Some (players, deckAfterAllPlayersHaveBeenInitialized) ->
+            let maybeInitializedDealer = trySetupDealer drawCard deckAfterAllPlayersHaveBeenInitialized
+            match maybeInitializedDealer with
+            | None -> weWillDealWithErrorHandlingLater "problem initializing dealer"
+            | Some (dealer, deckAfterDealerInitialization) ->
 
-            let initialGameState = {
-                Players = players
-                Dealer = dealer
-                Deck = deckAfterDealerInitialization
-                GameStatus = Started
-            }
+                let initialGameState = {
+                    Players = players
+                    Dealer = dealer
+                    Deck = deckAfterDealerInitialization
+                    GameStatus = Started
+                }
 
-            // TODO: implement multiplayer mode
-            let gameAfterPlayerFinished = playerLoop initialGameState (PlayerId 1)
-            let gameAfterDealerFinished = dealerTurn gameAfterPlayerFinished
+                // TODO: implement multiplayer mode
+                let gameAfterPlayerFinished = playerLoop initialGameState (PlayerId 1)
+                let gameAfterDealerFinished = dealerTurn gameAfterPlayerFinished
 
-            printfn "final player hand: %A" gameAfterDealerFinished.Players.[0].Hand
-            printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
-            printfn "Winner is %A" (determineWinner gameAfterDealerFinished)
-            ()
+                printfn "final player hand: %A" gameAfterDealerFinished.Players.[0].Hand
+                printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
+                printfn "Winner is %A" (determineWinner gameAfterDealerFinished)
+                ()
 
     0 // return an integer exit code
