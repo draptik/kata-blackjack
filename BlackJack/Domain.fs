@@ -97,6 +97,17 @@ let initializePlayers numberOfPlayers initialDeck =
         ([], initialDeck)
         playerIds
     
+// returns (Player list * Deck) option
+let tryInitializePlayers numberOfPlayers initialDeck =
+    let (initializedPlayers, deckAfterInitializingAllPlayers) = initializePlayers numberOfPlayers initialDeck
+    let (NumberOfPlayers requestedNumberOfPlayers) = numberOfPlayers
+    let numberOfCardsDealtToPlayer = 2
+    let isValid = 
+        initializedPlayers.Length = requestedNumberOfPlayers 
+        && deckAfterInitializingAllPlayers.Length = (requestedNumberOfPlayers * numberOfCardsDealtToPlayer) - initialDeck.Length
+    
+    if isValid then Some (initializedPlayers, deckAfterInitializingAllPlayers)
+    else None
 
 type CalcScore = Hand -> Score
 let calcScore : CalcScore =
