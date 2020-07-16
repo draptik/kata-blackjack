@@ -7,7 +7,7 @@ open BlackJack.Game
 let printStartMessage =
     printfn "Welcome to BlackJack %s" Environment.NewLine
 
-let weWillDealWithErrorHandingLater s =
+let weWillDealWithErrorHandlingLater s =
     printfn "Should never happen unless the deck has less than 2 cards %s" s
 
 type GameStatus = 
@@ -160,13 +160,13 @@ let main argv =
     let initialDeck = createDeck
     let maybeNumberOfPlayers = askForNumberOfPlayers
     match maybeNumberOfPlayers with
-    | None -> weWillDealWithErrorHandingLater "invalid number of players"
+    | None -> weWillDealWithErrorHandlingLater "invalid number of players"
     
     | Some numberOfPlayers ->
         let (players, deckAfterAllPlayersHaveBeenInitialized) = initializePlayers numberOfPlayers initialDeck
         let maybeInitializedDealer = trySetupDealer drawCard deckAfterAllPlayersHaveBeenInitialized
         match maybeInitializedDealer with
-        | None -> weWillDealWithErrorHandingLater "problem initializing dealer"
+        | None -> weWillDealWithErrorHandlingLater "problem initializing dealer"
         | Some (dealer, deckAfterDealerInitialization) ->
 
             let initialGameState = {
