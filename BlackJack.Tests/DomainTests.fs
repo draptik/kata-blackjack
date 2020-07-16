@@ -138,7 +138,7 @@ let ``initialize 3 players with minimal deck`` () =
         ]
 
     // Act
-    let (players, deck) = initializePlayers 3 initialDeck
+    let (players, deck) = initializePlayers (NumberOfPlayers 3) initialDeck
     
     // Assert
     players.Length |> should equal 3

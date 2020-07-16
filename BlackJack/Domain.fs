@@ -83,8 +83,11 @@ let trySetupDealer : TrySetupDealerFcn =
             return {Hand = hand; HandStatus = CardsDealt}, deck
         }
 
+type NumberOfPlayers = NumberOfPlayers of int
+
 let initializePlayers numberOfPlayers initialDeck =
-    let playerIds = [1..numberOfPlayers] |> List.map PlayerId
+    let (NumberOfPlayers n) = numberOfPlayers
+    let playerIds = [1..n] |> List.map PlayerId
     List.fold 
         (fun (currentPlayers, currentDeck) playerId ->
             match trySetupPlayer drawCard playerId currentDeck with
