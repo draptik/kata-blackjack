@@ -4,6 +4,9 @@ type Suit = Hearts | Spades | Diamonds | Clubs
 type Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
 type Card = { Rank: Rank; Suit: Suit }
 
+let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
+let allSuits = [Diamonds; Hearts; Clubs; Spades]
+
 type Deck = Card list
 type Hand = Card list
 type Score = Score of int
@@ -18,9 +21,6 @@ type Dealer = { Hand: Hand; HandStatus: HandStatus }
 
 type PlayerId = PlayerId of int
 type Player = { Hand: Hand; HandStatus: HandStatus; Id: PlayerId }
-
-let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
-let allSuits = [Diamonds; Hearts; Clubs; Spades]
 
 // extended list comprehension
 let fullDeck = [
