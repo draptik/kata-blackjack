@@ -298,3 +298,19 @@ let ``try to initialize 3 players with understacked deck not enough cards for 3 
 [<Fact>]
 let ``show card unicode`` () =
     createDeck |> List.iter (showCard >> printfn "%s")
+
+[<Fact>]
+let ``split players`` () =
+    let p1 = {Id = PlayerId 1; Hand = [{ Rank = Two; Suit = Hearts}]; HandStatus = Stayed (Score 2)}
+    let p2 = {Id = PlayerId 2; Hand = [{ Rank = Two; Suit = Spades}]; HandStatus = Stayed (Score 2)}
+    let p3 = {Id = PlayerId 3; Hand = [{ Rank = Three; Suit = Hearts}]; HandStatus = Stayed (Score 3)}
+    let p4 = {Id = PlayerId 4; Hand = [{ Rank = Three; Suit = Spades}]; HandStatus = Stayed (Score 3)}
+
+    let (players: Player list) = [p1] @ [p2] @ [p3] @ [p4]
+    
+    // p3 and p4 are tied with score 3
+    // p1 and p2 are below score 3
+    // 2 lists: [p3, p4] and [p1, p2]
+    let (winningPlayers, loosingPlayers) = splitPlayers players
+    // TODO: ...
+    Assert.True(true)
