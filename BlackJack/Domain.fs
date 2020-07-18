@@ -233,3 +233,20 @@ let rec dealerAction dealerRecord =
         match drawCard dealerRecord.Deck with
         | None -> DealerError ("unable to draw a card", dealerRecord.Hand, dealerRecord.Deck) 
         | Some (card, d) -> dealerAction { Hand = card::dealerRecord.Hand; Deck = d }
+
+let showHand (hand: Hand) =
+    hand |> List.map showCard |> String.concat " " |> sprintf "%A %A" (calcScore hand)
+
+
+// create 2 lists of players: tied for max score and the rest
+let splitPlayers (players: Player list) : (Player list * Player list) =
+    match players with
+    | [] -> ([], [])
+    | players ->
+        let groupedPlayers = players |> List.groupBy (fun p -> calcScore p.Hand)
+        let (_, winners) = groupedPlayers.[0]
+        let winningPlayers = winners
+        let otherPlayers = groupedPlayers.Tail |> List.collect (fun (a, b) -> b)
+        (winningPlayers, otherPlayers)
+        // let (winningPlayers, otherPlayers) = result.head:result.tail
+        // (players, players)
