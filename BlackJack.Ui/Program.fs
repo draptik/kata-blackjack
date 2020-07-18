@@ -179,9 +179,12 @@ let main argv =
                     GameStatus = Started
                 }
 
-                // TODO: implement multiplayer mode
-                let gameAfterPlayerFinished = playerLoop initialGameState (PlayerId 1)
-                let gameAfterDealerFinished = dealerTurn gameAfterPlayerFinished
+                let gameAfterAllPlayersFinished =
+                    initialGameState.Players 
+                    |> List.map (fun p -> p.Id)
+                    |> List.fold playerLoop initialGameState
+
+                let gameAfterDealerFinished = dealerTurn gameAfterAllPlayersFinished
 
                 printfn "final player hand: %A" gameAfterDealerFinished.Players.[0].Hand
                 printfn "final dealer hand: %A" gameAfterDealerFinished.Dealer.Hand
