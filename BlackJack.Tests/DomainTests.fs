@@ -294,3 +294,7 @@ let ``try to initialize 3 players with understacked deck not enough cards for 3 
     match opt with
     | None -> Assert.True(true) // <- expected
     | Some -> isFalse
+
+[<Fact>]
+let ``show card unicode`` () =
+    createDeck |> List.iter (showCard >> printfn "%s")

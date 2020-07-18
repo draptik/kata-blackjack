@@ -37,7 +37,7 @@ let playerLoop game playerId =
 
         let playerChoice = Console.ReadLine().Trim()
         match playerChoice with
-        | "1" -> 
+        | "1" -> // Hit
             
             match drawCardToHand (deckInternal, handInternal) with
             | None -> { game with GameStatus = PlayerError }
@@ -63,7 +63,7 @@ let playerLoop game playerId =
                 | _ -> 
                     { game with GameStatus = PlayerError}
 
-        | "2" -> 
+        | "2" -> // Stand
             {
                 Players = game.Players
                 Dealer = game.Dealer
@@ -133,7 +133,7 @@ type Winner =
 let determineWinner game =
     printfn "Result is:%s" Environment.NewLine
     
-    game.Players |> List.iter (fun x -> printfn "PlayerId: %A final hand: %A " x.Id x.Hand)
+    game.Players |> List.iter (fun x -> printfn "%A final hand: %A " x.Id x.Hand)
     printfn "final dealer hand: %A" game.Dealer.Hand
 
     // TODO:
