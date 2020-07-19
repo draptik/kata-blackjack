@@ -3,7 +3,7 @@
 ## TODOs
 
 - the easy part is implementing the rules for a single hand with a given deck
-- the difficult part is building a clean model for interactive code, with multiple players
+- the difficult part is building a clean model for interactive code, with multiple players, and bets (https://de.wikipedia.org/wiki/Black_Jack#Spielablauf)
 - property-based-testing
 
 ## Linux IDE FSharp support
