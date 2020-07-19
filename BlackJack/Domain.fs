@@ -243,10 +243,16 @@ let splitPlayers (players: Player list) : (Player list * Player list) =
     match players with
     | [] -> ([], [])
     | players ->
-        let groupedPlayers = players |> List.groupBy (fun p -> calcScore p.Hand)
-        let (_, winners) = groupedPlayers.[0]
-        let winningPlayers = winners
-        let otherPlayers = groupedPlayers.Tail |> List.collect (fun (a, b) -> b)
+        let groupedPlayers = 
+            players 
+            |> List.groupBy (fun p -> calcScore p.Hand) 
+            |> List.sort // sort by score
+            |> List.rev // ensure highest score is first
+
+        // get info via destruct
+        let (_, winningPlayers) = groupedPlayers.Head
+
+        // get info via aggregate function 'collect'
+        let otherPlayers = groupedPlayers.Tail |> List.collect (fun (_, b) -> b)
+
         (winningPlayers, otherPlayers)
-        // let (winningPlayers, otherPlayers) = result.head:result.tail
-        // (players, players)

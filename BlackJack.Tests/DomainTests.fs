@@ -306,11 +306,10 @@ let ``split players`` () =
     let p3 = {Id = PlayerId 3; Hand = [{ Rank = Three; Suit = Hearts}]; HandStatus = Stayed (Score 3)}
     let p4 = {Id = PlayerId 4; Hand = [{ Rank = Three; Suit = Spades}]; HandStatus = Stayed (Score 3)}
 
-    let (players: Player list) = [p1] @ [p2] @ [p3] @ [p4]
+    let players = [p1] @ [p2] @ [p3] @ [p4]
     
     // p3 and p4 are tied with score 3
     // p1 and p2 are below score 3
-    // 2 lists: [p3, p4] and [p1, p2]
     let (winningPlayers, loosingPlayers) = splitPlayers players
-    // TODO: ...
-    Assert.True(true)
+    loosingPlayers |> should equal ([p1] @ [p2])
+    winningPlayers |> should equal ([p3] @ [p4])
