@@ -119,22 +119,26 @@ let determineWinners game =
     game.Players |> List.iter (fun x -> printfn "%A final hand: %A " x.Id (showHand x.Hand))
     printfn "final dealer hand: %A" (showHand game.Dealer.Hand)
 
-    let (pWin: Player list, pLoos: Player list) =
-        game.Players |> splitPlayers
+    let (winningPlayers: Player list, _) = game.Players |> splitPlayers
 
-    // TODO:
-    Nobody
+    let winningPlayerScore = calcScore winningPlayers.[0].Hand
+    let dealerScore = calcScore game.Dealer.Hand
+
+    match (winningPlayerScore, dealerScore) with
+    | (p, d) when p = d -> Nobody
+    | (p, d) when p > d -> Players (winningPlayers)
+    | _ -> Dealer (game.Dealer)
     
 let askForNumberOfPlayers =
-    printfn "How many players (number between 1 and 3)?"
+    printfn "How many players (number between 1 and 7)?"
     let input = Console.ReadLine().Trim()
 
     let tryToNumberOfPlayers s =
-        let numberCheck = Regex("^(1|2|3)$")
+        let numberCheck = Regex("^(1|2|3|4|5|6|7)$")
         let strContainsOnlyValidNumbers (s:string) = numberCheck.IsMatch s
-        let isValidNumberOfPlayers = strContainsOnlyValidNumbers input
+        let isValidNumberOfPlayers = strContainsOnlyValidNumbers s
         match isValidNumberOfPlayers with
-        | true -> Some (NumberOfPlayers (System.Int32.Parse input))
+        | true -> Some (NumberOfPlayers (System.Int32.Parse s))
         | false -> None
 
     tryToNumberOfPlayers input
@@ -171,7 +175,13 @@ let main argv =
                     |> List.fold playerLoop initialGameState
 
                 let gameAfterDealerFinished = dealerTurn gameAfterAllPlayersFinished
-                printfn "Winner is %A" (determineWinners gameAfterDealerFinished)
+
+                let winners = determineWinners gameAfterDealerFinished
+                match winners with
+                | Nobody -> printfn "Nobody won ;-("
+                | Dealer d -> printfn "Dealer won! %A" (showHand d.Hand)
+                | Players ps -> printfn "The following players won: %A" (ps |> List.map (fun x -> x.Id))
+                
                 ()
 
     0 // return an integer exit code
