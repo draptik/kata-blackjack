@@ -15,7 +15,7 @@ let ``drawing a card from the deck reduces number of cards in deck by one`` () =
     let deck = createDeck
     let maybeCardDeck = drawCard deck
     match maybeCardDeck with
-    | Some (_, d) -> d.Length |> should equal (deck.Length - 1)
+    | Ok (_, d) -> d.Length |> should equal (deck.Length - 1)
     | _ -> isFalse
 
 [<Fact>]
@@ -23,20 +23,20 @@ let ``setup player has 2 cards and deck has 50 cards`` () =
     let deck = createDeck
     let maybePlayerDeck = trySetupPlayer drawCard (PlayerId 1) deck
     match maybePlayerDeck with
-    | None -> isFalse
-    | Some (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
+    | Error _ -> isFalse
+    | Ok (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
 
 [<Fact>]
 let ``setup 2 players: each player has 2 cards and deck has 48 cards`` () =
     let deck = createDeck
     let maybePlayerDeck1 = trySetupPlayer drawCard (PlayerId 1) deck
     match maybePlayerDeck1 with
-    | None -> isFalse
-    | Some (p1, d1) ->
+    | Error _ -> isFalse
+    | Ok (p1, d1) ->
         let maybePlayerDeck2 = trySetupPlayer drawCard (PlayerId 2) d1
         match maybePlayerDeck2 with
-        | None -> isFalse
-        | Some (p2, d2) ->
+        | Error _ -> isFalse
+        | Ok (p2, d2) ->
             (p1.Hand.Length, p2.Hand.Length, d2.Length) |> should equal (2, 2, 48)
 
 [<Fact>]
@@ -44,9 +44,14 @@ let ``trying to draw a card from an empty deck returns None`` () =
     let deck = []
     let maybeCardDeck = drawCard deck
     match maybeCardDeck with
-    | Some _ -> isFalse
-    | None -> Assert.True(true)
-    
+    | Ok _ -> isFalse
+    | Error e -> e |> should equal ErrorDrawCard
+
+[<Fact>]
+let ``calcScore returns 0 for an empty hand`` () =
+    let emptyHand:Hand = []
+    emptyHand |> calcScore |> should equal (Score 0)
+
 [<Fact>]
 let ``Status and score: below 21`` () =
     (CardsDealt, [
@@ -102,8 +107,8 @@ let ``setup dealer has 2 cards and deck has 50 cards`` () =
     let deck = createDeck
     let maybeDealerDeck = trySetupDealer drawCard deck
     match maybeDealerDeck with
-    | None -> isFalse
-    | Some (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
+    | Error _ -> isFalse
+    | Ok (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
 
 [<Fact>]
 let ``dealerAction 1`` () =
@@ -115,8 +120,8 @@ let ``dealerAction 1`` () =
 
     let maybeDealerDeck = trySetupDealer drawCard initialDeck
     match maybeDealerDeck with
-    | None -> isFalse
-    | Some (dealer, deck) ->
+    | Error _ -> isFalse
+    | Ok (dealer, deck) ->
         let dealerResponse = dealerAction { Hand = dealer.Hand; Deck = deck }
         match dealerResponse with
         | DealerStayed (x, _, _) -> x |> should equal (Score 17)
@@ -236,8 +241,8 @@ let ``try to initialize 3 players with minimal deck`` () =
     let opt = tryInitializePlayers (NumberOfPlayers 3) initialDeck
     printfn "opt: %A" opt
     match opt with
-    | None -> isFalse
-    | Some (players, deck) ->
+    | Error _ -> isFalse
+    | Ok (players, deck) ->
 
         // Assert
         players.Length |> should equal 3
@@ -292,12 +297,13 @@ let ``try to initialize 3 players with understacked deck not enough cards for 3 
 
     // Assert
     match opt with
-    | None -> Assert.True(true) // <- expected
-    | Some -> isFalse
+    | Error e -> e |> should equal ErrorInitializingPlayers
+    | Ok _ -> isFalse
 
-[<Fact>]
-let ``show card unicode`` () =
-    createDeck |> List.iter (showCard >> printfn "%s")
+// Not a real test, just output all cards as unicode...
+// [<Fact>]
+// let ``show card unicode`` () =
+//     createDeck |> List.iter (showCard >> printfn "%s")
 
 [<Fact>]
 let ``split players`` () =

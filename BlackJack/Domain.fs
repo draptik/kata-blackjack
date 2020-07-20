@@ -1,5 +1,11 @@
 module BlackJack.Domain
 
+type AppError =
+    | ErrorInitializingPlayers
+    | ErrorDrawCard
+    | ErrorDrawCardToHand
+    | ErrorAskingForNumberOfPlayers
+
 type Suit = Hearts | Spades | Diamonds | Clubs
 type Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
 type Card = { Rank: Rank; Suit: Suit }
@@ -93,31 +99,30 @@ let createDeck : Deck =
         deck |> List.sortBy (fun x -> random.Next())
     fullDeck |> shuffle 
 
-type DrawCardFcn = Deck -> (Card * Deck) option
+type DrawCardFcn = Deck -> Result<(Card * Deck),AppError>
 let drawCard : DrawCardFcn =
     fun deck ->
         match deck with
-        | [] -> None
-        | topCard::restOfDeck -> Some (topCard, restOfDeck)
+        | [] -> Error ErrorDrawCard
+        | topCard::restOfDeck -> Ok (topCard, restOfDeck)
 
-type DrawCardToHandFcn = (Deck * Hand) -> (Deck * Hand) option
+type DrawCardToHandFcn = (Deck * Hand) -> Result<(Deck * Hand),AppError>
 let drawCardToHand : DrawCardToHandFcn =
     fun (deck, hand) ->
         match drawCard deck with
-
-        | None -> None
-        | Some (card, modifiedDeck) -> Some (modifiedDeck, card :: hand)
+        | Error -> Error ErrorDrawCardToHand
+        | Ok (card, modifiedDeck) -> Ok (modifiedDeck, card :: hand)
 
 type MaybeBuilder() =
     member this.Bind(input, func) =
         match input with
-        | None -> None
-        | Some value -> func value
+        | Error e -> Error e
+        | Ok value -> func value
     
     member this.Return value =
-        Some value
+        Ok value
 
-type TrySetupPlayerFcn = DrawCardFcn -> PlayerId -> Deck -> (Player * Deck) option         
+type TrySetupPlayerFcn = DrawCardFcn -> PlayerId -> Deck -> Result<(Player * Deck), AppError>         
 let trySetupPlayer : TrySetupPlayerFcn =
     fun drawCard id deck ->
         let maybe = MaybeBuilder ()
@@ -130,7 +135,7 @@ let trySetupPlayer : TrySetupPlayerFcn =
             return {Hand = hand; Id = id; HandStatus = CardsDealt}, deck
         }
 
-type TrySetupDealerFcn = DrawCardFcn -> Deck -> (Dealer * Deck) option         
+type TrySetupDealerFcn = DrawCardFcn -> Deck -> Result<(Dealer * Deck), AppError>         
 let trySetupDealer : TrySetupDealerFcn =
     fun drawCard deck ->
         let maybe = MaybeBuilder ()
@@ -153,8 +158,8 @@ let initializePlayers numberOfPlayers initialDeck =
     List.fold 
         (fun (currentPlayers, currentDeck) playerId ->
             match trySetupPlayer drawCard playerId currentDeck with
-            | Some (player, modifiedDeck) -> (currentPlayers@[player], modifiedDeck)
-            | None -> (currentPlayers, currentDeck))
+            | Ok (player, modifiedDeck) -> (currentPlayers@[player], modifiedDeck)
+            | Error -> (currentPlayers, currentDeck))
         ([], initialDeck)
         playerIds
     
@@ -167,8 +172,8 @@ let tryInitializePlayers numberOfPlayers initialDeck =
         initializedPlayers.Length = requestedNumberOfPlayers
         && deckAfterInitializingAllPlayers.Length = initialDeck.Length - (requestedNumberOfPlayers * numberOfCardsDealtToPlayer)
 
-    if isValid then Some (initializedPlayers, deckAfterInitializingAllPlayers)
-    else None
+    if isValid then Ok (initializedPlayers, deckAfterInitializingAllPlayers)
+    else Error ErrorInitializingPlayers
 
 type CalcScore = Hand -> Score
 let calcScore : CalcScore =
@@ -231,8 +236,8 @@ let rec dealerAction dealerRecord =
     | x when x >= Score 17 -> DealerStayed (score, dealerRecord.Hand, dealerRecord.Deck)
     | _ ->
         match drawCard dealerRecord.Deck with
-        | None -> DealerError ("unable to draw a card", dealerRecord.Hand, dealerRecord.Deck) 
-        | Some (card, d) -> dealerAction { Hand = card::dealerRecord.Hand; Deck = d }
+        | Error -> DealerError ("unable to draw a card", dealerRecord.Hand, dealerRecord.Deck) 
+        | Ok (card, d) -> dealerAction { Hand = card::dealerRecord.Hand; Deck = d }
 
 let showHand (hand: Hand) =
     hand |> List.map showCard |> String.concat " " |> sprintf "%A %A" (calcScore hand)

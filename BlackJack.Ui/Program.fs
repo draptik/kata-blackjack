@@ -40,9 +40,9 @@ let playerLoop game currentPlayerId =
 
             match drawCardToHand (deckInternal, handInternal) with
 
-            | None -> { game with GameStatus = PlayerError }
+            | Error _ -> { game with GameStatus = PlayerError }
 
-            | Some (newDeck, newHand) ->
+            | Ok (newDeck, newHand) ->
                 match getStatus (handstatusInternal, newHand) with
                 | HandStatus.Busted _ ->
                     (* Player looses and is removed from game *)
@@ -138,8 +138,8 @@ let askForNumberOfPlayers =
         let strContainsOnlyValidNumbers (s:string) = numberCheck.IsMatch s
         let isValidNumberOfPlayers = strContainsOnlyValidNumbers s
         match isValidNumberOfPlayers with
-        | true -> Some (NumberOfPlayers (System.Int32.Parse s))
-        | false -> None
+        | true -> Ok (NumberOfPlayers (System.Int32.Parse s))
+        | false -> Error ErrorAskingForNumberOfPlayers
 
     tryToNumberOfPlayers input
 
@@ -150,17 +150,16 @@ let main argv =
     let initialDeck = createDeck
     let maybeNumberOfPlayers = askForNumberOfPlayers
     match maybeNumberOfPlayers with
-    | None -> weWillDealWithErrorHandlingLater "invalid number of players"
-
-    | Some numberOfPlayers ->
+    | Error e -> weWillDealWithErrorHandlingLater "invalid number of players"
+    | Ok numberOfPlayers ->
         let maybeInitializedPlayers = tryInitializePlayers numberOfPlayers initialDeck
         match maybeInitializedPlayers with
-        | None -> weWillDealWithErrorHandlingLater "problem initializing players"
-        | Some (players, deckAfterAllPlayersHaveBeenInitialized) ->
+        | Error e -> weWillDealWithErrorHandlingLater "problem initializing players"
+        | Ok (players, deckAfterAllPlayersHaveBeenInitialized) ->
             let maybeInitializedDealer = trySetupDealer drawCard deckAfterAllPlayersHaveBeenInitialized
             match maybeInitializedDealer with
-            | None -> weWillDealWithErrorHandlingLater "problem initializing dealer"
-            | Some (dealer, deckAfterDealerInitialization) ->
+            | Error e -> weWillDealWithErrorHandlingLater "problem initializing dealer"
+            | Ok (dealer, deckAfterDealerInitialization) ->
 
                 let initialGameState = {
                     Players = players
