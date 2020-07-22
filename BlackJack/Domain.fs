@@ -163,7 +163,7 @@ let initializePlayers numberOfPlayers initialDeck =
         ([], initialDeck)
         playerIds
     
-// returns (Player list * Deck) option
+// returns Result<(Player list * Deck),AppError>
 let tryInitializePlayers numberOfPlayers initialDeck =
     let (initializedPlayers, deckAfterInitializingAllPlayers) = initializePlayers numberOfPlayers initialDeck
     let (NumberOfPlayers requestedNumberOfPlayers) = numberOfPlayers

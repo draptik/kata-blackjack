@@ -2,13 +2,9 @@
 open System.Text.RegularExpressions
 
 open BlackJack.Domain
-open BlackJack.Game
 
 let printStartMessage =
     printfn "Welcome to BlackJack %s" Environment.NewLine
-
-let weWillDealWithErrorHandlingLater s =
-    printfn "Should never happen unless the deck has less than 2 cards %s" s
 
 type GameStatus =
     | Started
@@ -37,38 +33,26 @@ let playerLoop game currentPlayerId =
         let playerChoice = Console.ReadLine().Trim()
         match playerChoice with
         | "1" -> // Hit
-
             match drawCardToHand (deckInternal, handInternal) with
-
             | Error _ -> { game with GameStatus = PlayerError }
-
             | Ok (newDeck, newHand) ->
                 match getStatus (handstatusInternal, newHand) with
                 | HandStatus.Busted _ ->
                     (* Player looses and is removed from game *)
                     printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId (showHand newHand)
-
                     (* remove player from game *)
-                    let players =
-                        game.Players |> List.filter (fun p -> p.Id <> currentPlayerId)
-
+                    let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> currentPlayerId)
                     {
-                        Players = players
+                        Players = playersWithoutBustedPlayer
                         Dealer = game.Dealer
                         Deck = newDeck
                         GameStatus = PlayerBusted // TODO: check if this game status is still needed, since we remove busted players
                     }
-
-                | HandStatus.Stayed score ->
-                    // recursion
-                    promptPlay (HandStatus.Stayed score) newHand newDeck
-                | _ ->
-                    { game with GameStatus = PlayerError}
-
+                | HandStatus.Stayed score -> promptPlay (HandStatus.Stayed score) newHand newDeck // recursion
+                | _ -> { game with GameStatus = PlayerError}
         | "2" -> // Stand
             let player = { Id = currentPlayerId; Hand = handInternal; HandStatus = handstatusInternal }
-            let players = game.Players |> List.map (fun p ->
-                if p.Id = currentPlayerId then player else p)
+            let players = game.Players |> List.map (fun p -> if p.Id = currentPlayerId then player else p)
             {
                 Players = players
                 Dealer = game.Dealer
@@ -79,7 +63,7 @@ let playerLoop game currentPlayerId =
             printfn "%A Unknown choice" currentPlayerId
             promptPlay handstatusInternal handInternal deckInternal
 
-    let player = game.Players |> List.find (fun x -> x.Id = currentPlayerId)
+    let player = game.Players |> List.find (fun p -> p.Id = currentPlayerId)
     promptPlay player.HandStatus player.Hand game.Deck
 
 let dealerTurn game =
@@ -149,38 +133,36 @@ let main argv =
 
     let initialDeck = createDeck
     let maybeNumberOfPlayers = askForNumberOfPlayers
-    match maybeNumberOfPlayers with
-    | Error e -> weWillDealWithErrorHandlingLater "invalid number of players"
-    | Ok numberOfPlayers ->
-        let maybeInitializedPlayers = tryInitializePlayers numberOfPlayers initialDeck
-        match maybeInitializedPlayers with
-        | Error e -> weWillDealWithErrorHandlingLater "problem initializing players"
-        | Ok (players, deckAfterAllPlayersHaveBeenInitialized) ->
-            let maybeInitializedDealer = trySetupDealer drawCard deckAfterAllPlayersHaveBeenInitialized
-            match maybeInitializedDealer with
-            | Error e -> weWillDealWithErrorHandlingLater "problem initializing dealer"
-            | Ok (dealer, deckAfterDealerInitialization) ->
 
-                let initialGameState = {
-                    Players = players
-                    Dealer = dealer
-                    Deck = deckAfterDealerInitialization
-                    GameStatus = Started
-                }
+    maybeNumberOfPlayers
+    |> Result.bind (fun numberOfPlayers -> tryInitializePlayers numberOfPlayers initialDeck)
+    |> Result.bind (fun (players, deck) -> 
+        let maybeInitializedDealer = trySetupDealer drawCard deck
+        match maybeInitializedDealer with
+        | Error e -> Error e
+        | Ok (dealer, deckAfterDealerSetup) ->
+            Ok {
+                Players = players
+                Dealer = dealer
+                Deck = deckAfterDealerSetup
+                GameStatus = Started
+            })
+    |> Result.bind (fun game ->
+        let gameAfterAllPlayersFinished =
+            game.Players
+            |> List.map (fun p -> p.Id)
+            |> List.fold playerLoop game // <- player interaction happens here!
 
-                let gameAfterAllPlayersFinished =
-                    initialGameState.Players
-                    |> List.map (fun p -> p.Id)
-                    |> List.fold playerLoop initialGameState
-
-                let gameAfterDealerFinished = dealerTurn gameAfterAllPlayersFinished
-
-                let winners = determineWinners gameAfterDealerFinished
-                match winners with
-                | Nobody -> printfn "Nobody won ;-("
-                | Dealer d -> printfn "Dealer won! %A" (showHand d.Hand)
-                | Players ps -> printfn "The following players won: %A" (ps |> List.map (fun x -> x.Id))
-                
-                ()
+        gameAfterAllPlayersFinished 
+        |> dealerTurn 
+        |> determineWinners 
+        |> Ok)
+    |> Result.map (fun (winners) ->
+        match winners with
+        | Nobody -> printfn "Nobody won ;-("
+        | Dealer d -> printfn "Dealer won! %A" (showHand d.Hand)
+        | Players ps -> printfn "The following players won: %A" (ps |> List.map (fun x -> x.Id)))
+    |> Result.mapError (fun error -> printfn "Ups: %A" error)
+    |> ignore
 
     0 // return an integer exit code
