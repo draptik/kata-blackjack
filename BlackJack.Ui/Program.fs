@@ -34,7 +34,7 @@ let playerLoop game currentPlayerId =
         match playerChoice with
         | "1" -> // Hit
             match drawCardToHand (deckInternal, handInternal) with
-            | Error _ -> { game with GameStatus = PlayerError }
+            | Error e -> Error e
             | Ok (newDeck, newHand) ->
                 match getStatus (handstatusInternal, newHand) with
                 | HandStatus.Busted _ ->
@@ -42,18 +42,18 @@ let playerLoop game currentPlayerId =
                     printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId (showHand newHand)
                     (* remove player from game *)
                     let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> currentPlayerId)
-                    {
+                    Ok {
                         Players = playersWithoutBustedPlayer
                         Dealer = game.Dealer
                         Deck = newDeck
                         GameStatus = PlayerBusted // TODO: check if this game status is still needed, since we remove busted players
                     }
                 | HandStatus.Stayed score -> promptPlay (HandStatus.Stayed score) newHand newDeck // recursion
-                | _ -> { game with GameStatus = PlayerError}
+                | _ -> Error ErrorPlayerPlayingInvalidHandState
         | "2" -> // Stand
             let player = { Id = currentPlayerId; Hand = handInternal; HandStatus = handstatusInternal }
             let players = game.Players |> List.map (fun p -> if p.Id = currentPlayerId then player else p)
-            {
+            Ok {
                 Players = players
                 Dealer = game.Dealer
                 Deck = deckInternal
@@ -69,22 +69,16 @@ let playerLoop game currentPlayerId =
 let dealerTurn game =
     let dealerPlayResult = dealerPlays { Hand = game.Dealer.Hand; Deck = game.Deck }
     match dealerPlayResult with
-    | DealerPlayResult.DealerError (error, hand, deck) ->
-        {
-            Players = game.Players
-            Dealer = { Hand = hand; HandStatus = game.Dealer.HandStatus }
-            Deck = deck
-            GameStatus = DealerError
-        }
+    | DealerPlayResult.ErrorDuringPlay -> Error ErrorDuringDealerPlay
     | DealerPlayResult.DealerBusted  (score, hand, deck) ->
-        {
+        Ok {
             Players = game.Players
             Dealer = { Hand = hand; HandStatus = HandStatus.Busted score }
             Deck = deck
             GameStatus = DealerBusted
         }
     | DealerPlayResult.DealerStayed (score, hand, deck) ->
-        {
+        Ok {
             Players = game.Players
             Dealer = { Hand = hand; HandStatus = HandStatus.Stayed score }
             Deck = deck
@@ -148,15 +142,16 @@ let main argv =
                 GameStatus = Started
             })
     |> Result.bind (fun game ->
-        let gameAfterAllPlayersFinished =
-            game.Players
-            |> List.map (fun p -> p.Id)
-            |> List.fold playerLoop game // <- player interaction happens here!
-
-        gameAfterAllPlayersFinished 
-        |> dealerTurn 
-        |> determineWinners 
-        |> Ok)
+        game.Players 
+        |> List.map (fun p -> p.Id)
+        |> List.fold 
+            (fun resultGame playerId -> 
+                resultGame 
+                |> Result.bind (fun currentGame -> 
+                    playerLoop currentGame playerId))
+            (Ok game))
+    |> Result.bind (dealerTurn)
+    |> Result.bind (determineWinners >> Ok)
     |> Result.map (fun (winners) ->
         match winners with
         | Nobody -> printfn "Nobody won ;-("

@@ -2,6 +2,8 @@ module BlackJack.Domain
 
 type AppError =
     | ErrorInitializingPlayers
+    | ErrorDuringDealerPlay
+    | ErrorPlayerPlayingInvalidHandState
     | ErrorDrawCard
     | ErrorDrawCardToHand
     | ErrorAskingForNumberOfPlayers
@@ -220,7 +222,7 @@ let getStatus : GetStatus =
         | _, score -> Busted (score)
 
 type DealerPlayResult =
-    | DealerError of (string * Hand * Deck)
+    | ErrorDuringPlay
     | DealerBusted of (Score * Hand * Deck)
     | DealerStayed of (Score * Hand * Deck)
 
@@ -236,7 +238,7 @@ let rec dealerPlays dealerPlayState =
     | score when score >= Score 17 -> DealerStayed (dealerScore, dealerPlayState.Hand, dealerPlayState.Deck)
     | _ ->
         match drawCard dealerPlayState.Deck with
-        | Error -> DealerError ("unable to draw a card", dealerPlayState.Hand, dealerPlayState.Deck) 
+        | Error -> ErrorDuringPlay
         | Ok (card, deck) -> dealerPlays { Hand = card::dealerPlayState.Hand; Deck = deck }
 
 let showHand (hand: Hand) =
