@@ -219,25 +219,25 @@ let getStatus : GetStatus =
         | _, score when score <= Score 21 -> Stayed (score)
         | _, score -> Busted (score)
 
-type DealerResponse =
+type DealerPlayResult =
     | DealerError of (string * Hand * Deck)
     | DealerBusted of (Score * Hand * Deck)
     | DealerStayed of (Score * Hand * Deck)
 
-type DealerRecord = {
+type DealerPlayState = {
     Hand: Hand
     Deck: Deck
 }
 
-let rec dealerAction dealerRecord =
-    let score = calcScore dealerRecord.Hand
-    match score with
-    | x when x > Score 21 -> DealerBusted (score, dealerRecord.Hand, dealerRecord.Deck)
-    | x when x >= Score 17 -> DealerStayed (score, dealerRecord.Hand, dealerRecord.Deck)
+let rec dealerPlays dealerPlayState =
+    let dealerScore = calcScore dealerPlayState.Hand
+    match dealerScore with
+    | score when score > Score 21 -> DealerBusted (dealerScore, dealerPlayState.Hand, dealerPlayState.Deck)
+    | score when score >= Score 17 -> DealerStayed (dealerScore, dealerPlayState.Hand, dealerPlayState.Deck)
     | _ ->
-        match drawCard dealerRecord.Deck with
-        | Error -> DealerError ("unable to draw a card", dealerRecord.Hand, dealerRecord.Deck) 
-        | Ok (card, d) -> dealerAction { Hand = card::dealerRecord.Hand; Deck = d }
+        match drawCard dealerPlayState.Deck with
+        | Error -> DealerError ("unable to draw a card", dealerPlayState.Hand, dealerPlayState.Deck) 
+        | Ok (card, deck) -> dealerPlays { Hand = card::dealerPlayState.Hand; Deck = deck }
 
 let showHand (hand: Hand) =
     hand |> List.map showCard |> String.concat " " |> sprintf "%A %A" (calcScore hand)

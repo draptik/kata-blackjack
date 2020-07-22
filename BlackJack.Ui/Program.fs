@@ -67,23 +67,23 @@ let playerLoop game currentPlayerId =
     promptPlay player.HandStatus player.Hand game.Deck
 
 let dealerTurn game =
-    let dealerResponse = dealerAction { Hand = game.Dealer.Hand; Deck = game.Deck }
-    match dealerResponse with
-    | DealerResponse.DealerError (error, hand, deck) ->
+    let dealerPlayResult = dealerPlays { Hand = game.Dealer.Hand; Deck = game.Deck }
+    match dealerPlayResult with
+    | DealerPlayResult.DealerError (error, hand, deck) ->
         {
             Players = game.Players
             Dealer = { Hand = hand; HandStatus = game.Dealer.HandStatus }
             Deck = deck
             GameStatus = DealerError
         }
-    | DealerResponse.DealerBusted  (score, hand, deck) ->
+    | DealerPlayResult.DealerBusted  (score, hand, deck) ->
         {
             Players = game.Players
             Dealer = { Hand = hand; HandStatus = HandStatus.Busted score }
             Deck = deck
             GameStatus = DealerBusted
         }
-    | DealerResponse.DealerStayed (score, hand, deck) ->
+    | DealerPlayResult.DealerStayed (score, hand, deck) ->
         {
             Players = game.Players
             Dealer = { Hand = hand; HandStatus = HandStatus.Stayed score }

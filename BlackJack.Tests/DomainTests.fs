@@ -111,7 +111,7 @@ let ``setup dealer has 2 cards and deck has 50 cards`` () =
     | Ok (p, d) -> (p.Hand.Length, d.Length) |> should equal (2, 50)
 
 [<Fact>]
-let ``dealerAction 1`` () =
+let ``dealer plays`` () =
     let initialDeck = [
         { Rank = Queen; Suit = Spades }; 
         { Rank = Seven; Suit = Hearts };
@@ -122,7 +122,7 @@ let ``dealerAction 1`` () =
     match maybeDealerDeck with
     | Error _ -> isFalse
     | Ok (dealer, deck) ->
-        let dealerResponse = dealerAction { Hand = dealer.Hand; Deck = deck }
+        let dealerResponse = dealerPlays { Hand = dealer.Hand; Deck = deck }
         match dealerResponse with
         | DealerStayed (x, _, _) -> x |> should equal (Score 17)
         | _ -> isFalse
