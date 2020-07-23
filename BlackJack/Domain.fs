@@ -245,6 +245,7 @@ let showHand (hand: Hand) =
     hand |> List.map showCard |> String.concat " " |> sprintf "%A %A" (calcScore hand)
 
 
+// TODO: Maybe add WinningPlayers and NonWinningPlayers as types?
 // create 2 lists of players: tied for max score and the rest
 let splitPlayers (players: Player list) : (Player list * Player list) =
     match players with
@@ -263,3 +264,21 @@ let splitPlayers (players: Player list) : (Player list * Player list) =
         let otherPlayers = groupedPlayers.Tail |> List.collect (fun (_, b) -> b)
 
         (winningPlayers, otherPlayers)
+
+
+type Winner =
+    | Players of Player list
+    | Dealer of Dealer
+    | Nobody
+
+let determinWinner (winningPlayers: Player list) (dealer: Dealer) =
+    let (winningPlayers, _) = winningPlayers |> splitPlayers 
+
+    let winningPlayerScore = calcScore winningPlayers.[0].Hand
+    let dealerScore = calcScore dealer.Hand
+
+    match (winningPlayerScore, dealerScore) with
+    | (p, d) when p = d -> Nobody
+    | (p, d) when p > d -> Players (winningPlayers)
+    | _ -> Dealer (dealer)
+    

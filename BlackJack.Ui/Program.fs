@@ -85,27 +85,12 @@ let dealerTurn game =
             GameStatus = DealerFinished
         }
 
-type Winner =
-    | Players of Player list
-    | Dealer of Dealer
-    | Nobody
-
-let determineWinners game =
+let determineWinnersIO game =
     printfn "Result is:%s" Environment.NewLine
-
-    (* Side effect printing... *)
-    game.Players |> List.iter (fun x -> printfn "%A final hand: %A " x.Id (showHand x.Hand))
+    game.Players |> List.iter (fun player -> printfn "%A final hand: %A " player.Id (showHand player.Hand))
     printfn "final dealer hand: %A" (showHand game.Dealer.Hand)
-
-    let (winningPlayers: Player list, _) = game.Players |> splitPlayers
-
-    let winningPlayerScore = calcScore winningPlayers.[0].Hand
-    let dealerScore = calcScore game.Dealer.Hand
-
-    match (winningPlayerScore, dealerScore) with
-    | (p, d) when p = d -> Nobody
-    | (p, d) when p > d -> Players (winningPlayers)
-    | _ -> Dealer (game.Dealer)
+    
+    determinWinner game.Players game.Dealer
     
 let askForNumberOfPlayers =
     printfn "How many players (number between 1 and 7)?"
@@ -131,27 +116,23 @@ let main argv =
     maybeNumberOfPlayers
     |> Result.bind (fun numberOfPlayers -> tryInitializePlayers numberOfPlayers initialDeck)
     |> Result.bind (fun (players, deck) -> 
-        let maybeInitializedDealer = trySetupDealer drawCard deck
-        match maybeInitializedDealer with
-        | Error e -> Error e
-        | Ok (dealer, deckAfterDealerSetup) ->
+        trySetupDealer drawCard deck
+        |> Result.bind (fun (dealer, deckAfterDealerSetup) ->
             Ok {
                 Players = players
                 Dealer = dealer
                 Deck = deckAfterDealerSetup
                 GameStatus = Started
-            })
+            }))
     |> Result.bind (fun game ->
         game.Players 
         |> List.map (fun p -> p.Id)
         |> List.fold 
             (fun resultGame playerId -> 
-                resultGame 
-                |> Result.bind (fun currentGame -> 
-                    playerLoop currentGame playerId))
+                resultGame |> Result.bind (fun currentGame -> playerLoop currentGame playerId))
             (Ok game))
     |> Result.bind (dealerTurn)
-    |> Result.bind (determineWinners >> Ok)
+    |> Result.bind (determineWinnersIO >> Ok)
     |> Result.map (fun (winners) ->
         match winners with
         | Nobody -> printfn "Nobody won ;-("

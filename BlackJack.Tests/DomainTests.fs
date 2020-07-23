@@ -306,16 +306,74 @@ let ``try to initialize 3 players with understacked deck not enough cards for 3 
 //     createDeck |> List.iter (showCard >> printfn "%s")
 
 [<Fact>]
-let ``split players`` () =
+let ``split players hand with single card`` () =
     let p1 = {Id = PlayerId 1; Hand = [{ Rank = Two; Suit = Hearts}]; HandStatus = Stayed (Score 2)}
     let p2 = {Id = PlayerId 2; Hand = [{ Rank = Two; Suit = Spades}]; HandStatus = Stayed (Score 2)}
     let p3 = {Id = PlayerId 3; Hand = [{ Rank = Three; Suit = Hearts}]; HandStatus = Stayed (Score 3)}
     let p4 = {Id = PlayerId 4; Hand = [{ Rank = Three; Suit = Spades}]; HandStatus = Stayed (Score 3)}
 
-    let players = [p1] @ [p2] @ [p3] @ [p4]
+    let players = [p1;p2;p3;p4]
     
     // p3 and p4 are tied with score 3
     // p1 and p2 are below score 3
     let (winningPlayers, loosingPlayers) = splitPlayers players
-    loosingPlayers |> should equal ([p1] @ [p2])
-    winningPlayers |> should equal ([p3] @ [p4])
+    loosingPlayers |> should equal ([p1;p2])
+    winningPlayers |> should equal ([p3;p4])
+
+[<Fact>]
+let ``split players hand with multiple cards`` () =
+    let p1 = {
+        Id = PlayerId 1
+        Hand = [
+            { Rank = Nine; Suit = Hearts}
+            { Rank = Ace; Suit = Hearts}]
+        HandStatus = Stayed (Score 20)}
+    let p2 = {
+        Id = PlayerId 2
+        Hand = [
+            { Rank = Five; Suit = Spades}
+            { Rank = Five; Suit = Clubs}
+            { Rank = King; Suit = Spades}]
+        HandStatus = Stayed (Score 20)}
+    let p3 = {Id = PlayerId 3; Hand = [{ Rank = Three; Suit = Hearts}]; HandStatus = Stayed (Score 3)}
+    let p4 = {Id = PlayerId 4; Hand = [{ Rank = Three; Suit = Spades}]; HandStatus = Stayed (Score 3)}
+
+    let players = [p1;p2;p3;p4]
+    
+    // p1 and p2 are have 20
+    // p3 and p4 are below 20
+    let (winningPlayers, loosingPlayers) = splitPlayers players
+    winningPlayers |> should equal ([p1;p2])
+    loosingPlayers |> should equal ([p3;p4])
+
+[<Fact>]
+let ``determine winners`` () =
+    let p1 = {
+        Id = PlayerId 1
+        Hand = [
+            { Rank = Nine; Suit = Hearts}
+            { Rank = Ace; Suit = Hearts}]
+        HandStatus = Stayed (Score 20)}
+    let p2 = {
+        Id = PlayerId 2
+        Hand = [
+            { Rank = Five; Suit = Spades}
+            { Rank = Five; Suit = Clubs}
+            { Rank = King; Suit = Spades}]
+        HandStatus = Stayed (Score 20)}
+    let p3 = {
+        Id = PlayerId 3
+        Hand = [
+            { Rank = Six; Suit = Spades}
+            { Rank = Seven; Suit = Clubs}]
+        HandStatus = Stayed (Score 13)}
+    let dealer = {
+        Hand = [
+            {Rank = Five; Suit = Hearts}
+            {Rank = Jack; Suit = Hearts}
+            {Rank = Two; Suit = Hearts}
+            {Rank = Ace; Suit = Hearts}]
+        HandStatus = Stayed (Score 18)
+    }
+    let actual = determinWinner [p1;p2;p3] dealer
+    actual |> should equal (Players [p1; p2])
