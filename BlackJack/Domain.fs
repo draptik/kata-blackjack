@@ -7,6 +7,10 @@ type AppError =
     | ErrorDrawCard
     | ErrorDrawCardToHand
     | ErrorAskingForNumberOfPlayers
+    | ErrorDealerCanOnlyBeDealtCardsAfterPlayersHaveBeenDealt
+    | ErrorPlayerLoopsCanOlyStartAfterDealerHasBeenDealt
+    | ErrorDealerTurnCanOnlyStartAfterAllPlayersFinished
+    | ErrorWinnerCanOlyBeDeterminedAfterDealerIsFinished
 
 type Suit = Hearts | Spades | Diamonds | Clubs
 type Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
@@ -101,19 +105,15 @@ let createDeck : Deck =
         deck |> List.sortBy (fun x -> random.Next())
     fullDeck |> shuffle 
 
-type DrawCardFcn = Deck -> Result<(Card * Deck),AppError>
-let drawCard : DrawCardFcn =
-    fun deck ->
-        match deck with
-        | [] -> Error ErrorDrawCard
-        | topCard::restOfDeck -> Ok (topCard, restOfDeck)
+let drawCard deck =
+    match deck with
+    | [] -> Error ErrorDrawCard
+    | topCard::restOfDeck -> Ok (topCard, restOfDeck)
 
-type DrawCardToHandFcn = (Deck * Hand) -> Result<(Deck * Hand),AppError>
-let drawCardToHand : DrawCardToHandFcn =
-    fun (deck, hand) ->
-        match drawCard deck with
-        | Error -> Error ErrorDrawCardToHand
-        | Ok (card, modifiedDeck) -> Ok (modifiedDeck, card :: hand)
+let drawCardToHand (deck, hand) =
+    match drawCard deck with
+    | Error -> Error ErrorDrawCardToHand
+    | Ok (card, modifiedDeck) -> Ok (modifiedDeck, card :: hand)
 
 type MaybeBuilder() =
     member this.Bind(input, func) =
@@ -124,35 +124,30 @@ type MaybeBuilder() =
     member this.Return value =
         Ok value
 
-type TrySetupPlayerFcn = DrawCardFcn -> PlayerId -> Deck -> Result<(Player * Deck), AppError>         
-let trySetupPlayer : TrySetupPlayerFcn =
-    fun drawCard id deck ->
-        let maybe = MaybeBuilder ()
+let trySetupPlayer drawCardFcn id deck =
+    let maybe = MaybeBuilder ()
 
-        maybe {
-            let! firstCard, deck = drawCard deck
-            let! secondCard, deck = drawCard deck
-            let hand = [firstCard; secondCard]
+    maybe {
+        let! firstCard, deck = drawCardFcn deck
+        let! secondCard, deck = drawCardFcn deck
+        let hand = [firstCard; secondCard]
 
-            return {Hand = hand; Id = id; HandStatus = CardsDealt}, deck
-        }
+        return {Hand = hand; Id = id; HandStatus = CardsDealt}, deck
+    }
 
-type TrySetupDealerFcn = DrawCardFcn -> Deck -> Result<(Dealer * Deck), AppError>         
-let trySetupDealer : TrySetupDealerFcn =
-    fun drawCard deck ->
-        let maybe = MaybeBuilder ()
+let trySetupDealer drawCardFcn deck =
+    let maybe = MaybeBuilder ()
 
-        maybe {
-            let! firstCard, deck = drawCard deck
-            let! secondCard, deck = drawCard deck
-            let hand = [firstCard; secondCard]
+    maybe {
+        let! firstCard, deck = drawCardFcn deck
+        let! secondCard, deck = drawCardFcn deck
+        let hand = [firstCard; secondCard]
 
-            return {Hand = hand; HandStatus = CardsDealt}, deck
-        }
+        return {Hand = hand; HandStatus = CardsDealt}, deck
+    }
 
 type NumberOfPlayers = NumberOfPlayers of int
 
-// returns (Player list * Deck)
 // TODO: make private (use try wrapper below)
 let initializePlayers numberOfPlayers initialDeck =
     let (NumberOfPlayers n) = numberOfPlayers
@@ -212,14 +207,12 @@ let calcScore : CalcScore =
                     
         getHandValue hand |> Score
 
-type GetStatus = (HandStatus * Hand) -> HandStatus
-let getStatus : GetStatus =
-    fun (handStatus, hand) ->
-        let score = calcScore hand
-        match handStatus, score with
-        | handStatus, score when handStatus = CardsDealt && score = Score 21 -> BlackJack
-        | _, score when score <= Score 21 -> Stayed (score)
-        | _, score -> Busted (score)
+let getStatus (handStatus, hand) =
+    let score = calcScore hand
+    match handStatus, score with
+    | handStatus, score when handStatus = CardsDealt && score = Score 21 -> BlackJack
+    | _, score when score <= Score 21 -> Stayed (score)
+    | _, score -> Busted (score)
 
 type DealerPlayResult =
     | ErrorDuringPlay
@@ -244,41 +237,37 @@ let rec dealerPlays dealerPlayState =
 let showHand (hand: Hand) =
     hand |> List.map showCard |> String.concat " " |> sprintf "%A %A" (calcScore hand)
 
-
-// TODO: Maybe add WinningPlayers and NonWinningPlayers as types?
-// create 2 lists of players: tied for max score and the rest
-let splitPlayers (players: Player list) : (Player list * Player list) =
+let getPotentialWinningPlayers (players: Player list) : Player list =
     match players with
-    | [] -> ([], [])
+    | [] -> []
     | players ->
-        let groupedPlayers = 
-            players 
-            |> List.groupBy (fun p -> calcScore p.Hand) 
-            |> List.sort // sort by score
-            |> List.rev // ensure highest score is first
-
-        // get info via destruct
-        let (_, winningPlayers) = groupedPlayers.Head
-
-        // get info via aggregate function 'collect'
-        let otherPlayers = groupedPlayers.Tail |> List.collect (fun (_, b) -> b)
-
-        (winningPlayers, otherPlayers)
-
+        players 
+        |> List.groupBy (fun p -> calcScore p.Hand) // creates a tuple (Score * Player list)
+        |> List.sort // sort by score
+        |> List.rev // ensure highest score is first
+        |> List.head // gets the first element in the list
+        |> snd // gets the second part of the tuple (all potential winning players); ("fst" is the score here)
 
 type Winner =
     | Players of Player list
     | Dealer of Dealer
     | Nobody
 
-let determinWinner (winningPlayers: Player list) (dealer: Dealer) =
-    let (winningPlayers, _) = winningPlayers |> splitPlayers 
-
-    let winningPlayerScore = calcScore winningPlayers.[0].Hand
-    let dealerScore = calcScore dealer.Hand
-
-    match (winningPlayerScore, dealerScore) with
-    | (p, d) when p = d -> Nobody
-    | (p, d) when p > d -> Players (winningPlayers)
-    | _ -> Dealer (dealer)
-    
+let determinWinner players (dealer: Dealer) =
+    let winningPlayers = players |> getPotentialWinningPlayers 
+    match winningPlayers with
+    | [] -> Nobody
+    | players ->
+        (* 
+            All winning players have the same Score. 
+            We take the first player (players.Head) for comparison with the dealer 
+        *)
+        match players.Head.HandStatus, dealer.HandStatus with
+        | Stayed playerScore, Stayed dealerScore ->
+            match playerScore, dealerScore with
+            | p, d when p = d -> Nobody
+            | p, d when p > d -> Players winningPlayers
+            | _ -> Dealer dealer
+        | Stayed, Busted -> Players winningPlayers
+        | Busted, Stayed -> Dealer dealer
+        | _ -> Nobody
