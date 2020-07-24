@@ -19,6 +19,7 @@ type Card = { Rank: Rank; Suit: Suit }
 let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
 let allSuits = [Diamonds; Hearts; Clubs; Spades]
 
+// TODO: move somewhere else
 let showCard (card: Card) =
     // https://en.wikipedia.org/wiki/Playing_cards_in_Unicode#Block
     match card with
@@ -234,19 +235,27 @@ let rec dealerPlays dealerPlayState =
         | Error -> ErrorDuringPlay
         | Ok (card, deck) -> dealerPlays { Hand = card::dealerPlayState.Hand; Deck = deck }
 
-let showHand (hand: Hand) =
-    hand |> List.map showCard |> String.concat " " |> sprintf "%A %A" (calcScore hand)
+// TODO: move somewhere else
+let showHand (hand: Hand) (handStatus: HandStatus) =
+    hand |> List.map showCard |> String.concat " " |> sprintf "%A %A %A" handStatus (calcScore hand)
 
-let getPotentialWinningPlayers (players: Player list) : Player list =
+let getPotentialWinningPlayers (players: Player list) : Player list option =
     match players with
-    | [] -> []
+    | [] -> None
     | players ->
-        players 
+        let isNotBusted handStatus =
+            match handStatus with
+            | Busted _ -> false
+            | _ -> true
+            
+        players
+        |> List.filter (fun p -> p.HandStatus |> isNotBusted)
         |> List.groupBy (fun p -> calcScore p.Hand) // creates a tuple (Score * Player list)
         |> List.sort // sort by score
         |> List.rev // ensure highest score is first
         |> List.head // gets the first element in the list
         |> snd // gets the second part of the tuple (all potential winning players); ("fst" is the score here)
+        |> Some
 
 type Winner =
     | Players of Player list
@@ -254,10 +263,13 @@ type Winner =
     | Nobody
 
 let determinWinner players (dealer: Dealer) =
-    let winningPlayers = players |> getPotentialWinningPlayers 
-    match winningPlayers with
-    | [] -> Nobody
-    | players ->
+    let winningPlayersOpt = players |> getPotentialWinningPlayers 
+    match winningPlayersOpt with
+    | None ->
+        match dealer.HandStatus with
+        | Busted -> Nobody
+        | _ -> Dealer dealer
+    | Some players ->
         (* 
             All winning players have the same Score. 
             We take the first player (players.Head) for comparison with the dealer 
@@ -266,8 +278,8 @@ let determinWinner players (dealer: Dealer) =
         | Stayed playerScore, Stayed dealerScore ->
             match playerScore, dealerScore with
             | p, d when p = d -> Nobody
-            | p, d when p > d -> Players winningPlayers
+            | p, d when p > d -> Players players
             | _ -> Dealer dealer
-        | Stayed, Busted -> Players winningPlayers
+        | Stayed, Busted -> Players players
         | Busted, Stayed -> Dealer dealer
         | _ -> Nobody

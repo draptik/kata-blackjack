@@ -317,7 +317,17 @@ let ``get potential winning players - hand with single card`` () =
     // p3 and p4 are tied with score 3
     // p1 and p2 are below score 3
     let winningPlayers = getPotentialWinningPlayers players
-    winningPlayers |> should equal ([p3;p4])
+    winningPlayers |> should equal (Some [p3;p4])
+
+[<Fact>]
+let ``get potential winning players - two players one busted`` () =
+    let p1 = {Id = PlayerId 1; Hand = [{ Rank = Two; Suit = Hearts}]; HandStatus = Stayed (Score 2)}
+    let p2 = {Id = PlayerId 2; Hand = [{ Rank = Two; Suit = Spades}; { Rank = Queen; Suit = Spades}; { Rank = King; Suit = Spades}]; HandStatus = Busted (Score 22)}
+
+    let players = [p1;p2]
+    
+    let winningPlayers = getPotentialWinningPlayers players
+    winningPlayers |> should equal (Some [p1])
 
 [<Fact>]
 let ``get potential winning players - hand with multiple cards`` () =
@@ -342,7 +352,7 @@ let ``get potential winning players - hand with multiple cards`` () =
     // p1 and p2 are have 20
     // p3 and p4 are below 20
     let winningPlayers = getPotentialWinningPlayers players
-    winningPlayers |> should equal ([p1;p2])
+    winningPlayers |> should equal (Some [p1;p2])
 
 [<Fact>]
 let ``determine winners example 1 - tied winning players both win`` () =
@@ -393,3 +403,41 @@ let ``determine winners example 2 - busted dealer never wins`` () =
     }
     let actual = determinWinner [p1] dealer
     actual |> should equal (Players [p1])
+
+[<Fact>]
+let ``determine winners example 3`` () =
+    let p1 = {
+        Id = PlayerId 1
+        Hand = [
+            { Rank = Nine; Suit = Hearts}
+            { Rank = Ten; Suit = Hearts}]
+        HandStatus = Stayed (Score 19)}
+    let p2 = {
+        Id = PlayerId 2
+        Hand = [
+            { Rank = Five; Suit = Spades}
+            { Rank = Queen; Suit = Clubs}
+            { Rank = Four; Suit = Spades}]
+        HandStatus = Stayed (Score 19)}
+    let p3 = {
+        Id = PlayerId 3
+        Hand = [
+            { Rank = Jack; Suit = Spades}
+            { Rank = Five; Suit = Spades}
+            { Rank = Two; Suit = Clubs}]
+        HandStatus = Stayed (Score 17)}
+    let p4 = {
+        Id = PlayerId 3
+        Hand = [
+            { Rank = Jack; Suit = Spades}
+            { Rank = Ten; Suit = Spades}]
+        HandStatus = Stayed (Score 20)}
+    let dealer = {
+        Hand = [
+            {Rank = Seven; Suit = Hearts}
+            {Rank = Jack; Suit = Hearts}
+            {Rank = Two; Suit = Hearts}]
+        HandStatus = Stayed (Score 19)
+    }
+    let actual = determinWinner [p1;p2;p3;p4] dealer
+    actual |> should equal (Players [p4])
