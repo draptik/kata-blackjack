@@ -61,6 +61,32 @@ let showCard card =
     | { Suit = Clubs; Rank = Queen } -> sprintf "\U0001F0DD"
     | { Suit = Clubs; Rank = King } -> sprintf "\U0001F0DE"
 
+let showCardAscii (card: Card) =
+    let rank = 
+        match card.Rank with
+        | Two -> " 2"
+        | Three -> " 3"
+        | Four -> " 4"
+        | Five -> " 5"
+        | Six -> " 6"
+        | Seven -> " 7"
+        | Eight -> " 8"
+        | Nine -> " 9"
+        | Ten -> "10"
+        | Jack -> "Ja"
+        | Queen -> "Qu"
+        | King -> "Ki"
+        | Ace -> "Ac"
+
+    let suit =
+        match card.Suit with
+        | Hearts -> "H"
+        | Spades -> "S"
+        | Clubs -> "C"
+        | Diamonds -> "D"
+
+    sprintf "%s%s" rank suit
+
 let showHand hand handStatus =
     hand 
     |> List.map showCard 
