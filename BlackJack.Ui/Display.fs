@@ -89,6 +89,6 @@ let showCardAscii (card: Card) =
 
 let showHand hand handStatus =
     hand 
-    |> List.map showCard 
+    |> List.map showCardAscii 
     |> String.concat " " 
     |> sprintf "%A %A %A" handStatus (calcScore hand)
