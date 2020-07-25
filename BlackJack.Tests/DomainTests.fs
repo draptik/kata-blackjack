@@ -300,11 +300,6 @@ let ``try to initialize 3 players with understacked deck not enough cards for 3 
     | Error e -> e |> should equal ErrorInitializingPlayers
     | Ok _ -> isFalse
 
-// Not a real test, just output all cards as unicode...
-// [<Fact>]
-// let ``show card unicode`` () =
-//     createDeck |> List.iter (showCard >> printfn "%s")
-
 [<Fact>]
 let ``get potential winning players - hand with single card`` () =
     let p1 = {Id = PlayerId 1; Hand = [{ Rank = Two; Suit = Hearts}]; HandStatus = Stayed (Score 2)}

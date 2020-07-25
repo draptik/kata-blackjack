@@ -17,67 +17,7 @@ type Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack 
 type Card = { Rank: Rank; Suit: Suit }
 
 let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
-let allSuits = [Diamonds; Hearts; Clubs; Spades]
-
-// TODO: move somewhere else
-let showCard (card: Card) =
-    // https://en.wikipedia.org/wiki/Playing_cards_in_Unicode#Block
-    match card with
-    | { Suit = Spades; Rank = Ace } -> sprintf "\U0001F0A1"
-    | { Suit = Spades; Rank = Two } -> sprintf "\U0001F0A2"
-    | { Suit = Spades; Rank = Three } -> sprintf "\U0001F0A3"
-    | { Suit = Spades; Rank = Four } -> sprintf "\U0001F0A4"
-    | { Suit = Spades; Rank = Five } -> sprintf "\U0001F0A5"
-    | { Suit = Spades; Rank = Six } -> sprintf "\U0001F0A6"
-    | { Suit = Spades; Rank = Seven } -> sprintf "\U0001F0A7"
-    | { Suit = Spades; Rank = Eight } -> sprintf "\U0001F0A8"
-    | { Suit = Spades; Rank = Nine } -> sprintf "\U0001F0A9"
-    | { Suit = Spades; Rank = Ten } -> sprintf "\U0001F0AA"
-    | { Suit = Spades; Rank = Jack } -> sprintf "\U0001F0AB"
-    | { Suit = Spades; Rank = Queen } -> sprintf "\U0001F0AD"
-    | { Suit = Spades; Rank = King } -> sprintf "\U0001F0AE"
-
-    | { Suit = Hearts; Rank = Ace } -> sprintf "\U0001F0B1"
-    | { Suit = Hearts; Rank = Two } -> sprintf "\U0001F0B2"
-    | { Suit = Hearts; Rank = Three } -> sprintf "\U0001F0B3"
-    | { Suit = Hearts; Rank = Four } -> sprintf "\U0001F0B4"
-    | { Suit = Hearts; Rank = Five } -> sprintf "\U0001F0B5"
-    | { Suit = Hearts; Rank = Six } -> sprintf "\U0001F0B6"
-    | { Suit = Hearts; Rank = Seven } -> sprintf "\U0001F0B7"
-    | { Suit = Hearts; Rank = Eight } -> sprintf "\U0001F0B8"
-    | { Suit = Hearts; Rank = Nine } -> sprintf "\U0001F0B9"
-    | { Suit = Hearts; Rank = Ten } -> sprintf "\U0001F0BA"
-    | { Suit = Hearts; Rank = Jack } -> sprintf "\U0001F0BB"
-    | { Suit = Hearts; Rank = Queen } -> sprintf "\U0001F0BD"
-    | { Suit = Hearts; Rank = King } -> sprintf "\U0001F0BE"
-
-    | { Suit = Diamonds; Rank = Ace } -> sprintf "\U0001F0C1"
-    | { Suit = Diamonds; Rank = Two } -> sprintf "\U0001F0C2"
-    | { Suit = Diamonds; Rank = Three } -> sprintf "\U0001F0C3"
-    | { Suit = Diamonds; Rank = Four } -> sprintf "\U0001F0C4"
-    | { Suit = Diamonds; Rank = Five } -> sprintf "\U0001F0C5"
-    | { Suit = Diamonds; Rank = Six } -> sprintf "\U0001F0C6"
-    | { Suit = Diamonds; Rank = Seven } -> sprintf "\U0001F0C7"
-    | { Suit = Diamonds; Rank = Eight } -> sprintf "\U0001F0C8"
-    | { Suit = Diamonds; Rank = Nine } -> sprintf "\U0001F0C9"
-    | { Suit = Diamonds; Rank = Ten } -> sprintf "\U0001F0CA"
-    | { Suit = Diamonds; Rank = Jack } -> sprintf "\U0001F0CB"
-    | { Suit = Diamonds; Rank = Queen } -> sprintf "\U0001F0CD"
-    | { Suit = Diamonds; Rank = King } -> sprintf "\U0001F0CE"
-
-    | { Suit = Clubs; Rank = Ace } -> sprintf "\U0001F0D1"
-    | { Suit = Clubs; Rank = Two } -> sprintf "\U0001F0D2"
-    | { Suit = Clubs; Rank = Three } -> sprintf "\U0001F0D3"
-    | { Suit = Clubs; Rank = Four } -> sprintf "\U0001F0D4"
-    | { Suit = Clubs; Rank = Five } -> sprintf "\U0001F0D5"
-    | { Suit = Clubs; Rank = Six } -> sprintf "\U0001F0D6"
-    | { Suit = Clubs; Rank = Seven } -> sprintf "\U0001F0D7"
-    | { Suit = Clubs; Rank = Eight } -> sprintf "\U0001F0D8"
-    | { Suit = Clubs; Rank = Nine } -> sprintf "\U0001F0D9"
-    | { Suit = Clubs; Rank = Ten } -> sprintf "\U0001F0DA"
-    | { Suit = Clubs; Rank = Jack } -> sprintf "\U0001F0DB"
-    | { Suit = Clubs; Rank = Queen } -> sprintf "\U0001F0DD"
-    | { Suit = Clubs; Rank = King } -> sprintf "\U0001F0DE"
+let allSuits = [ Diamonds; Hearts; Clubs; Spades ]
 
 type Deck = Card list
 type Hand = Card list
@@ -161,7 +101,6 @@ let initializePlayers numberOfPlayers initialDeck =
         ([], initialDeck)
         playerIds
     
-// returns Result<(Player list * Deck),AppError>
 let tryInitializePlayers numberOfPlayers initialDeck =
     let (initializedPlayers, deckAfterInitializingAllPlayers) = initializePlayers numberOfPlayers initialDeck
     let (NumberOfPlayers requestedNumberOfPlayers) = numberOfPlayers
@@ -173,40 +112,38 @@ let tryInitializePlayers numberOfPlayers initialDeck =
     if isValid then Ok (initializedPlayers, deckAfterInitializingAllPlayers)
     else Error ErrorInitializingPlayers
 
-type CalcScore = Hand -> Score
-let calcScore : CalcScore =
-    fun hand ->
-        let getCardValueSoft card =
-            match card.Rank with
-            | Two -> 2
-            | Three -> 3
-            | Four -> 4
-            | Five -> 5
-            | Six -> 6
-            | Seven -> 7
-            | Eight -> 8
-            | Nine -> 9
-            | Ten | Jack | Queen | King -> 10
-            | Ace -> 11
+let calcScore (hand: Hand) =
+    let getCardValueSoft card =
+        match card.Rank with
+        | Two -> 2
+        | Three -> 3
+        | Four -> 4
+        | Five -> 5
+        | Six -> 6
+        | Seven -> 7
+        | Eight -> 8
+        | Nine -> 9
+        | Ten | Jack | Queen | King -> 10
+        | Ace -> 11
 
-        let getCardValueHard card =
-            match card.Rank with
-            | Ace -> 1
-            | _ -> getCardValueSoft card
+    let getCardValueHard card =
+        match card.Rank with
+        | Ace -> 1
+        | _ -> getCardValueSoft card
+    
+    let getHandValue hand =
+        let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 hand
         
-        let getHandValue hand =
-            let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 hand
-            
-            if softValue <= 21 then softValue
-            else
-                List.fold (fun accumulator element ->
-                    let newValue = accumulator + getCardValueSoft element
-                    if newValue < 21 then newValue
-                    else accumulator + getCardValueHard element)
-                    0
-                    (List.sort hand)
-                    
-        getHandValue hand |> Score
+        if softValue <= 21 then softValue
+        else
+            List.fold (fun accumulator element ->
+                let newValue = accumulator + getCardValueSoft element
+                if newValue < 21 then newValue
+                else accumulator + getCardValueHard element)
+                0
+                (List.sort hand)
+                
+    getHandValue hand |> Score
 
 let getStatus (handStatus, hand) =
     let score = calcScore hand
@@ -235,11 +172,7 @@ let rec dealerPlays dealerPlayState =
         | Error -> ErrorDuringPlay
         | Ok (card, deck) -> dealerPlays { Hand = card::dealerPlayState.Hand; Deck = deck }
 
-// TODO: move somewhere else
-let showHand (hand: Hand) (handStatus: HandStatus) =
-    hand |> List.map showCard |> String.concat " " |> sprintf "%A %A %A" handStatus (calcScore hand)
-
-let getPotentialWinningPlayers (players: Player list) : Player list option =
+let getPotentialWinningPlayers players =
     match players with
     | [] -> None
     | players ->
@@ -277,8 +210,8 @@ let determinWinner players (dealer: Dealer) =
         match players.Head.HandStatus, dealer.HandStatus with
         | Stayed playerScore, Stayed dealerScore ->
             match playerScore, dealerScore with
-            | p, d when p = d -> Nobody
-            | p, d when p > d -> Players players
+            | pScore, dScore when pScore = dScore -> Nobody
+            | pScore, dScore when pScore > dScore -> Players players
             | _ -> Dealer dealer
         | Stayed, Busted -> Players players
         | Busted, Stayed -> Dealer dealer

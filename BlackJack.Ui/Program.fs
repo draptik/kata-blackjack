@@ -2,6 +2,7 @@
 open System.Text.RegularExpressions
 
 open BlackJack.Domain
+open BlackJack.Ui.Display
 
 let printStartMessage =
     printfn "Welcome to BlackJack %s" Environment.NewLine
