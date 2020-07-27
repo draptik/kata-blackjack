@@ -87,8 +87,12 @@ let showCardAscii (card: Card) =
 
     sprintf "%s%s" rank suit
 
-let showHand hand handStatus =
-    hand 
+let showHand (hand: Hand) =
+    
+    let getCards (h:Hand) = match h.Cards with | HandCards cs -> cs
+    
+    hand
+    |> getCards
     |> List.map showCardAscii 
     |> String.concat " " 
-    |> sprintf "%A %A %A" handStatus (calcScore hand)
+    |> sprintf "%A %A %A" hand.Status (calcScore hand.Cards)

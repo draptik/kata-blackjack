@@ -20,7 +20,6 @@ let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Que
 let allSuits = [ Diamonds; Hearts; Clubs; Spades ]
 
 type Deck = Card list
-type Hand = Card list
 type Score = Score of int
 
 type HandStatus = 
@@ -29,10 +28,20 @@ type HandStatus =
     | Busted of Score 
     | Stayed of Score 
 
-type Dealer = { Hand: Hand; HandStatus: HandStatus }
+type HandCards = HandCards of Card list
+
+type Hand = {
+    Cards: HandCards
+    Status: HandStatus
+}
+
+let getCards hand = match hand.Cards with | HandCards cards -> cards
+//let toHand cards status = { Cards = cards; Status status }    
+
+type Dealer = { Hand: Hand }
 
 type PlayerId = PlayerId of int
-type Player = { Hand: Hand; HandStatus: HandStatus; Id: PlayerId }
+type Player = { Hand: Hand; Id: PlayerId }
 
 // extended list comprehension
 let fullDeck = [
@@ -46,15 +55,18 @@ let createDeck : Deck =
         deck |> List.sortBy (fun x -> random.Next())
     fullDeck |> shuffle 
 
-let drawCard deck =
+let drawCardFromDeck (deck:Deck) : Result<(Card*Deck),AppError> =
     match deck with
     | [] -> Error ErrorDrawCard
     | topCard::restOfDeck -> Ok (topCard, restOfDeck)
 
-let drawCardToHand (deck, hand) =
-    match drawCard deck with
+let drawCardToHand ((deck:Deck), hand) =
+    match drawCardFromDeck deck with
     | Error -> Error ErrorDrawCardToHand
-    | Ok (card, modifiedDeck) -> Ok (modifiedDeck, card :: hand)
+    | Ok (card, modifiedDeck) -> 
+        let handCards = card :: (hand |> getCards)
+        let newHand = { Cards = HandCards handCards; Status = hand.Status }
+        Ok (modifiedDeck, newHand)
 
 type MaybeBuilder() =
     member this.Bind(input, func) =
@@ -71,9 +83,9 @@ let trySetupPlayer drawCardFcn id deck =
     maybe {
         let! firstCard, deck = drawCardFcn deck
         let! secondCard, deck = drawCardFcn deck
-        let hand = [firstCard; secondCard]
-
-        return {Hand = hand; Id = id; HandStatus = CardsDealt}, deck
+        let handCards = HandCards [firstCard; secondCard]
+        let hand = { Cards = handCards; Status = CardsDealt }
+        return {Hand = hand; Id = id}, deck
     }
 
 let trySetupDealer drawCardFcn deck =
@@ -82,9 +94,9 @@ let trySetupDealer drawCardFcn deck =
     maybe {
         let! firstCard, deck = drawCardFcn deck
         let! secondCard, deck = drawCardFcn deck
-        let hand = [firstCard; secondCard]
-
-        return {Hand = hand; HandStatus = CardsDealt}, deck
+        let handCards = HandCards [firstCard; secondCard]
+        let hand = { Cards = handCards; Status = CardsDealt }
+        return {Hand = hand}, deck
     }
 
 type NumberOfPlayers = NumberOfPlayers of int
@@ -95,7 +107,7 @@ let initializePlayers numberOfPlayers initialDeck =
     let playerIds = [1..n] |> List.map PlayerId
     List.fold 
         (fun (currentPlayers, currentDeck) playerId ->
-            match trySetupPlayer drawCard playerId currentDeck with
+            match trySetupPlayer drawCardFromDeck playerId currentDeck with
             | Ok (player, modifiedDeck) -> (currentPlayers@[player], modifiedDeck)
             | Error -> (currentPlayers, currentDeck))
         ([], initialDeck)
@@ -112,7 +124,7 @@ let tryInitializePlayers numberOfPlayers initialDeck =
     if isValid then Ok (initializedPlayers, deckAfterInitializingAllPlayers)
     else Error ErrorInitializingPlayers
 
-let calcScore (hand: Hand) =
+let calcScore (handCards: HandCards) =
     let getCardValueSoft card =
         match card.Rank with
         | Two -> 2
@@ -131,8 +143,9 @@ let calcScore (hand: Hand) =
         | Ace -> 1
         | _ -> getCardValueSoft card
     
-    let getHandValue hand =
-        let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 hand
+    let getHandValue handCards =
+        let (HandCards cards) = handCards
+        let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 cards
         
         if softValue <= 21 then softValue
         else
@@ -141,49 +154,52 @@ let calcScore (hand: Hand) =
                 if newValue < 21 then newValue
                 else accumulator + getCardValueHard element)
                 0
-                (List.sort hand)
+                (List.sort cards)
                 
-    getHandValue hand |> Score
+    getHandValue handCards |> Score
 
-let getStatus (handStatus, hand) =
-    let score = calcScore hand
-    match handStatus, score with
+let getStatus (hand: Hand) =
+    let score = calcScore hand.Cards
+    match hand.Status, score with
     | handStatus, score when handStatus = CardsDealt && score = Score 21 -> BlackJack
     | _, score when score <= Score 21 -> Stayed (score)
     | _, score -> Busted (score)
 
 type DealerPlayResult =
     | ErrorDuringPlay
-    | DealerBusted of (Score * Hand * Deck)
-    | DealerStayed of (Score * Hand * Deck)
+    | DealerBusted of (Score * HandCards * Deck)
+    | DealerStayed of (Score * HandCards * Deck)
 
 type DealerPlayState = {
-    Hand: Hand
+    Cards: HandCards
     Deck: Deck
 }
 
-let rec dealerPlays dealerPlayState =
-    let dealerScore = calcScore dealerPlayState.Hand
+let rec dealerPlays (dealerPlayState:DealerPlayState) =
+    let dealerScore = calcScore dealerPlayState.Cards
     match dealerScore with
-    | score when score > Score 21 -> DealerBusted (dealerScore, dealerPlayState.Hand, dealerPlayState.Deck)
-    | score when score >= Score 17 -> DealerStayed (dealerScore, dealerPlayState.Hand, dealerPlayState.Deck)
+    | score when score > Score 21 -> DealerBusted (dealerScore, dealerPlayState.Cards, dealerPlayState.Deck)
+    | score when score >= Score 17 -> DealerStayed (dealerScore, dealerPlayState.Cards, dealerPlayState.Deck)
     | _ ->
-        match drawCard dealerPlayState.Deck with
+        match drawCardFromDeck dealerPlayState.Deck with
         | Error -> ErrorDuringPlay
-        | Ok (card, deck) -> dealerPlays { Hand = card::dealerPlayState.Hand; Deck = deck }
+        | Ok (card, deck) -> 
+            let (HandCards prevCards) = dealerPlayState.Cards 
+            let newHandCards = card::prevCards |> HandCards
+            dealerPlays { Cards = newHandCards; Deck = deck }
 
-let getPotentialWinningPlayers players =
+let getPotentialWinningPlayers (players: Player list) =
     match players with
     | [] -> None
     | players ->
-        let isNotBusted handStatus =
-            match handStatus with
+        let isNotBusted hand =
+            match hand.Status with
             | Busted _ -> false
             | _ -> true
             
         players
-        |> List.filter (fun p -> p.HandStatus |> isNotBusted)
-        |> List.groupBy (fun p -> calcScore p.Hand) // creates a tuple (Score * Player list)
+        |> List.filter (fun p -> p.Hand |> isNotBusted)
+        |> List.groupBy (fun p -> calcScore p.Hand.Cards) // creates a tuple (Score * Player list)
         |> List.sort // sort by score
         |> List.rev // ensure highest score is first
         |> List.head // gets the first element in the list
@@ -199,7 +215,7 @@ let determinWinner players (dealer: Dealer) =
     let winningPlayersOpt = players |> getPotentialWinningPlayers 
     match winningPlayersOpt with
     | None ->
-        match dealer.HandStatus with
+        match dealer.Hand.Status with
         | Busted -> Nobody
         | _ -> Dealer dealer
     | Some players ->
@@ -207,7 +223,7 @@ let determinWinner players (dealer: Dealer) =
             All winning players have the same Score. 
             We take the first player (players.Head) for comparison with the dealer 
         *)
-        match players.Head.HandStatus, dealer.HandStatus with
+        match players.Head.Hand.Status, dealer.Hand.Status with
         | Stayed playerScore, Stayed dealerScore ->
             match playerScore, dealerScore with
             | pScore, dScore when pScore = dScore -> Nobody

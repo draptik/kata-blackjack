@@ -38,7 +38,7 @@ let tryInitializePlayersInGame numberOfPlayers =
 let trySetupDealerInGame gameState =
     match gameState with
     | CardsDealtToPlayers game ->
-        trySetupDealer drawCard game.Deck
+        trySetupDealer drawCardFromDeck game.Deck
         |> Result.bind (fun (dealer, modifiedDeck) ->
             Ok <| CardsDealtToDealer {
                 Players = game.Players
@@ -48,8 +48,8 @@ let trySetupDealerInGame gameState =
     | _ -> Error ErrorDealerCanOnlyBeDealtCardsAfterPlayersHaveBeenDealt
 
 let playerLoop game currentPlayerId =
-    let rec promptPlay handstatusInternal handInternal deckInternal =
-        printfn "%A Current Hand: %A" currentPlayerId (showHand handInternal handstatusInternal)
+    let rec promptPlay (handInternal: Hand) deckInternal =
+        printfn "%A Current Hand: %A" currentPlayerId (showHand handInternal)
         printfn "%A What do you want to do? (1) Hit or (2) Stand?" currentPlayerId
 
         let playerChoice = Console.ReadLine().Trim()
@@ -60,10 +60,11 @@ let playerLoop game currentPlayerId =
             match drawCardToHand (deckInternal, handInternal) with
             | Error e -> Error e
             | Ok (newDeck, newHand) ->
-                match getStatus (handstatusInternal, newHand) with
+                match getStatus { Cards = newHand.Cards; Status = handInternal.Status} with
+                // match getStatus (handInternal.Status, newHand.Cards) with
                 | Busted _ ->
                     (* Player looses and is removed from game *)
-                    printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId (showHand newHand handstatusInternal)
+                    printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId (showHand { Cards = newHand.Cards; Status = handInternal.Status})
                     (* remove player from game *)
                     let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> currentPlayerId)
                     Ok {
@@ -71,14 +72,15 @@ let playerLoop game currentPlayerId =
                         Dealer = game.Dealer
                         Deck = newDeck
                     }
-                | Stayed score -> promptPlay (Stayed score) newHand newDeck // recursion
+                | Stayed score -> promptPlay { Cards = newHand.Cards; Status = (Stayed score) } newDeck // recursion
                 | _ -> Error ErrorPlayerPlayingInvalidHandState
         | "2" -> // Stand
             let activeHandStatus =
-                match handstatusInternal with
-                | CardsDealt -> Stayed (calcScore handInternal)
+                match handInternal.Status with
+                | CardsDealt -> Stayed (calcScore handInternal.Cards)
                 | handStatus -> handStatus
-            let player = { Id = currentPlayerId; Hand = handInternal; HandStatus = activeHandStatus }
+            let hand = { Cards = handInternal.Cards; Status = activeHandStatus }
+            let player = { Id = currentPlayerId; Hand = hand }
             let players = game.Players |> List.map (fun p -> if p.Id = currentPlayerId then player else p)
             Ok {
                 Players = players
@@ -87,10 +89,10 @@ let playerLoop game currentPlayerId =
             }
         | _ ->
             printfn "%A Unknown choice" currentPlayerId
-            promptPlay handstatusInternal handInternal deckInternal
+            promptPlay handInternal deckInternal // recursion
 
     let player = game.Players |> List.find (fun p -> p.Id = currentPlayerId)
-    promptPlay player.HandStatus player.Hand game.Deck
+    promptPlay player.Hand game.Deck
 
 let playerLoops gameState =
     match gameState with
@@ -112,19 +114,19 @@ let playerLoops gameState =
 let dealerTurn gameState =
     match gameState with
     | PlayersFinished game ->
-        let dealerPlayResult = dealerPlays { Hand = game.Dealer.Hand; Deck = game.Deck }
+        let dealerPlayResult = dealerPlays { Cards = game.Dealer.Hand.Cards; Deck = game.Deck }
         match dealerPlayResult with
         | ErrorDuringPlay -> Error ErrorDuringDealerPlay
-        | DealerBusted  (score, hand, deck) ->
+        | DealerBusted  (score, handCards, deck) ->
             Ok <| DealerFinished {
                 Players = game.Players
-                Dealer = { Hand = hand; HandStatus = Busted score }
+                Dealer = { Hand = { Cards = handCards; Status = Busted score }}
                 Deck = deck
             }
-        | DealerStayed (score, hand, deck) ->
+        | DealerStayed (score, handCards, deck) ->
             Ok <| DealerFinished {
                 Players = game.Players
-                Dealer = { Hand = hand; HandStatus = Stayed score }
+                Dealer = { Hand = { Cards = handCards; Status = Stayed score }}
                 Deck = deck
             }
     | _ -> Error ErrorDealerTurnCanOnlyStartAfterAllPlayersFinished
@@ -133,8 +135,8 @@ let determineWinnersIO gameState =
     match gameState with
     | DealerFinished game ->
         printfn "Result is:%s" Environment.NewLine
-        game.Players |> List.iter (fun player -> printfn "%A final hand: %A " player.Id (showHand player.Hand player.HandStatus))
-        printfn "final dealer hand: %A" (showHand game.Dealer.Hand game.Dealer.HandStatus)
+        game.Players |> List.iter (fun player -> printfn "%A final hand: %A " player.Id (showHand player.Hand))
+        printfn "final dealer hand: %A" (showHand game.Dealer.Hand)
         
         determinWinner game.Players game.Dealer |> Ok
     | _ -> Error ErrorWinnerCanOlyBeDeterminedAfterDealerIsFinished
@@ -166,7 +168,7 @@ let main argv =
     |> Result.map (fun winners ->
         match winners with
         | Nobody -> printfn "Nobody won ;-("
-        | Dealer d -> printfn "Dealer won! %A" (showHand d.Hand d.HandStatus)
+        | Dealer d -> printfn "Dealer won! %A" (showHand d.Hand)
         | Players ps -> printfn "The following players won: %A" (ps |> List.map (fun x -> x.Id)))
     |> Result.mapError (fun error -> printfn "Ups: %A" error)
     |> ignore
