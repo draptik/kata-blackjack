@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <Compile Include="Domain.fs" />
-    <Compile Include="Game.fs" />
   </ItemGroup>
 
 </Project>

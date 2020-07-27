@@ -1,5 +1,7 @@
 module BlackJack.Domain
 
+type Undefined = exn
+
 type AppError =
     | ErrorInitializingPlayers
     | ErrorDuringDealerPlay
