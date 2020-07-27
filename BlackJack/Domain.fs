@@ -35,15 +35,21 @@ type Hand = {
     Status: HandStatus
 }
 
-let getCards hand = match hand.Cards with | HandCards cards -> cards
-//let toHand cards status = { Cards = cards; Status status }    
-
 type Dealer = { Hand: Hand }
 
 type PlayerId = PlayerId of int
 type Player = { Hand: Hand; Id: PlayerId }
 
-// extended list comprehension
+let getCards hand = match hand.Cards with | HandCards cards -> cards
+
+let deck2cards deck =
+    let (DeckCards cards) = deck
+    cards
+    
+let cards2deck (cards: Card list) : Deck =
+    cards |> DeckCards 
+
+
 let fullDeck = [
     for suit in allSuits do
     for rank in allRanks do
@@ -112,13 +118,6 @@ let initializePlayers numberOfPlayers initialDeck =
             | Error -> (currentPlayers, currentDeck))
         ([], initialDeck)
         playerIds
-    
-let deck2cards dc =
-    let (DeckCards cards) = dc
-    cards
-    
-let cards2deck (cards: Card list) : Deck =
-    cards |> DeckCards 
     
 let tryInitializePlayers numberOfPlayers initialDeck =
     let (initializedPlayers, deckAfterInitializingAllPlayers) = initializePlayers numberOfPlayers initialDeck
