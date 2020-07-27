@@ -19,7 +19,9 @@ type Card = { Rank: Rank; Suit: Suit }
 let allRanks = [ Two; Three; Four; Five; Six; Seven; Eight; Nine; Ten; Jack; Queen; King; Ace ]
 let allSuits = [ Diamonds; Hearts; Clubs; Spades ]
 
-type Deck = Card list
+type HandCards = HandCards of Card list
+type Deck = DeckCards of Card list
+
 type Score = Score of int
 
 type HandStatus = 
@@ -27,8 +29,6 @@ type HandStatus =
     | BlackJack 
     | Busted of Score 
     | Stayed of Score 
-
-type HandCards = HandCards of Card list
 
 type Hand = {
     Cards: HandCards
@@ -53,12 +53,12 @@ let createDeck : Deck =
     let shuffle deck = 
         let random = System.Random()
         deck |> List.sortBy (fun x -> random.Next())
-    fullDeck |> shuffle 
+    fullDeck |> shuffle |> DeckCards
 
 let drawCardFromDeck (deck:Deck) : Result<(Card*Deck),AppError> =
     match deck with
-    | [] -> Error ErrorDrawCard
-    | topCard::restOfDeck -> Ok (topCard, restOfDeck)
+    | DeckCards [] -> Error ErrorDrawCard
+    | DeckCards (topCard::restOfDeck) -> Ok (topCard, (DeckCards restOfDeck))
 
 let drawCardToHand ((deck:Deck), hand) =
     match drawCardFromDeck deck with
@@ -113,13 +113,21 @@ let initializePlayers numberOfPlayers initialDeck =
         ([], initialDeck)
         playerIds
     
+let deck2cards dc =
+    let (DeckCards cards) = dc
+    cards
+    
+let cards2deck (cards: Card list) : Deck =
+    cards |> DeckCards 
+    
 let tryInitializePlayers numberOfPlayers initialDeck =
     let (initializedPlayers, deckAfterInitializingAllPlayers) = initializePlayers numberOfPlayers initialDeck
     let (NumberOfPlayers requestedNumberOfPlayers) = numberOfPlayers
     let numberOfCardsDealtToPlayer = 2
-    let isValid = 
+    let isValid =
         initializedPlayers.Length = requestedNumberOfPlayers
-        && deckAfterInitializingAllPlayers.Length = initialDeck.Length - (requestedNumberOfPlayers * numberOfCardsDealtToPlayer)
+        && (deckAfterInitializingAllPlayers |> deck2cards).Length =
+            (initialDeck |> deck2cards).Length - (requestedNumberOfPlayers * numberOfCardsDealtToPlayer)
 
     if isValid then Ok (initializedPlayers, deckAfterInitializingAllPlayers)
     else Error ErrorInitializingPlayers

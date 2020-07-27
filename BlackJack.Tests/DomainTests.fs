@@ -18,16 +18,21 @@ let setupHand rawCards status =
         Status = status
     }
     
+let setupDeckCards rawCards =
+    rawCards
+    |> List.map (fun (rank, suit) -> {Rank = rank; Suit = suit})
+    |> cards2deck
+    
 [<Fact>]
 let ``a deck has 52 cards initially`` () =
-    createDeck |> List.length |> should equal 52
+    createDeck |> deck2cards |> List.length |> should equal 52
     
 [<Fact>]
 let ``drawing a card from the deck reduces number of cards in deck by one`` () =
     let deck = createDeck
     let maybeCardDeck = drawCardFromDeck deck
     match maybeCardDeck with
-    | Ok (_, d) -> d.Length |> should equal (deck.Length - 1)
+    | Ok (_, d) -> (d |> deck2cards).Length |> should equal ((deck |> deck2cards).Length - 1)
     | _ -> isFalse
 
 [<Fact>]
@@ -36,7 +41,7 @@ let ``setup player has 2 cards and deck has 50 cards`` () =
     let maybePlayerDeck = trySetupPlayer drawCardFromDeck (PlayerId 1) deck
     match maybePlayerDeck with
     | Error _ -> isFalse
-    | Ok (p, d) -> (p.Hand |> numberOfCards, d.Length) |> should equal (2, 50)
+    | Ok (p, d) -> (p.Hand |> numberOfCards, (d |> deck2cards).Length) |> should equal (2, 50)
 
 [<Fact>]
 let ``setup 2 players: each player has 2 cards and deck has 48 cards`` () =
@@ -49,11 +54,11 @@ let ``setup 2 players: each player has 2 cards and deck has 48 cards`` () =
         match maybePlayerDeck2 with
         | Error _ -> isFalse
         | Ok (p2, d2) ->
-            (p1.Hand |> numberOfCards, p2.Hand |> numberOfCards, d2.Length) |> should equal (2, 2, 48)
+            (p1.Hand |> numberOfCards, p2.Hand |> numberOfCards, (d2 |> deck2cards).Length) |> should equal (2, 2, 48)
 
 [<Fact>]
 let ``trying to draw a card from an empty deck returns None`` () =
-    let deck = []
+    let deck = DeckCards []
     let maybeCardDeck = drawCardFromDeck deck
     match maybeCardDeck with
     | Ok _ -> isFalse
@@ -108,11 +113,11 @@ let ``setup dealer has 2 cards and deck has 50 cards`` () =
     let maybeDealerDeck = trySetupDealer drawCardFromDeck deck
     match maybeDealerDeck with
     | Error _ -> isFalse
-    | Ok (p, d) -> (p.Hand |> numberOfCards, d.Length) |> should equal (2, 50)
+    | Ok (p, d) -> (p.Hand |> numberOfCards, (d |> deck2cards).Length) |> should equal (2, 50)
 
 [<Fact>]
 let ``dealer plays`` () =
-    let initialDeck = setupCards [(Queen, Spades); (Seven, Hearts); (King, Hearts)]
+    let initialDeck = setupCards [(Queen, Spades); (Seven, Hearts); (King, Hearts)] |> DeckCards
 
     let maybeDealerDeck = trySetupDealer drawCardFromDeck initialDeck
     match maybeDealerDeck with
@@ -144,7 +149,7 @@ let check3Players  (players: Player list) =
 let ``initialize 3 players with minimal deck`` () =
     
     // Arrange
-    let initialDeck = setupCards [
+    let initialDeck = setupDeckCards [
         (Two, Spades)
         (Three, Spades)
         (Four, Spades)
@@ -159,9 +164,11 @@ let ``initialize 3 players with minimal deck`` () =
     
     // Assert
     players.Length |> should equal 3
-    remainingDeck.Length |> should equal 1
-    let firstCardOnRemainingDeck = remainingDeck |> List.head
-    let lastCardOfInitialDeck = initialDeck |> List.rev |> List.head
+    (remainingDeck |> deck2cards).Length |> should equal 1
+    let firstCardOnRemainingDeck = remainingDeck |> deck2cards |> List.head
+    let lastCardOfInitialDeck =
+        let (DeckCards initializedCards) = initialDeck
+        initializedCards |> List.rev |> List.head
     
     firstCardOnRemainingDeck |> should equal lastCardOfInitialDeck
 
@@ -171,22 +178,24 @@ let ``initialize 3 players with minimal deck`` () =
 let ``initialize 3 players with understacked deck not enough cards for 3 players`` () =
     
     // Arrange
-    let initialDeck = setupCards [
+    let initialDeck = setupDeckCards [
         (Two, Spades)
         (Three, Spades)
         (Four, Spades)
         (Five, Spades)
         (Six, Spades)
-    ]
+    ] 
 
     // Act
-    let (players, remainingDeck) = initializePlayers (NumberOfPlayers 3) initialDeck
+    let (players, (DeckCards remainingDeck)) = initializePlayers (NumberOfPlayers 3) initialDeck
     
     // Assert
     players.Length |> should equal 2
     remainingDeck.Length |> should equal 1
     let firstCardOnRemainingDeck = remainingDeck |> List.head
-    let lastCardOfInitialDeck = initialDeck |> List.rev |> List.head
+    let lastCardOfInitialDeck =
+        let (DeckCards initializedCards) = initialDeck
+        initializedCards |> List.rev |> List.head
     
     firstCardOnRemainingDeck |> should equal lastCardOfInitialDeck
 
@@ -205,7 +214,7 @@ let ``initialize 3 players with understacked deck not enough cards for 3 players
 let ``try to initialize 3 players with minimal deck`` () =
     
     // Arrange
-    let initialDeck = setupCards [
+    let initialDeck = setupDeckCards [
         (Two, Spades)
         (Three, Spades)
         (Four, Spades)
@@ -224,8 +233,8 @@ let ``try to initialize 3 players with minimal deck`` () =
 
         // Assert
         players.Length |> should equal 3
-        deck.Length |> should equal 1
-        deck
+        (deck |> deck2cards).Length |> should equal 1
+        (deck |> deck2cards)
         |> List.rev
         |> List.head
         |> should equal { Rank = Eight; Suit = Spades }
@@ -244,7 +253,7 @@ let ``try to initialize 3 players with understacked deck not enough cards for 3 
     ]
 
     // Act
-    let opt = tryInitializePlayers (NumberOfPlayers 3) initialDeck
+    let opt = tryInitializePlayers (NumberOfPlayers 3) (initialDeck |> cards2deck)
 
     // Assert
     match opt with
