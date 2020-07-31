@@ -174,6 +174,16 @@ let getStatus (hand: Hand) =
     | _, score when score <= Score 21 -> Stayed (score)
     | _, score -> Busted (score)
 
+let handPlaying hand =
+    match hand.Status with
+    | CardsDealt ->
+        // NICE-TO-HAVE / REFACTOR THIS: Not very smart to recalculate the score here again
+        {
+            Cards = hand.Cards
+            Status = calcScore hand.Cards |> Stayed
+        }
+    | _ -> hand
+    
 type DealerPlayResult =
     | ErrorDuringPlay
     | DealerBusted of (Score * HandCards * Deck)
