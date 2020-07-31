@@ -44,10 +44,8 @@ type Player = { Hand: Hand; Id: PlayerId }
 
 let getCards hand = match hand.Cards with | HandCards cards -> cards
 
-let deck2cards deck =
-    let (DeckCards cards) = deck
-    cards
-    
+let deck2cards (DeckCards cards) = cards
+
 let cards2deck (cards: Card list) : Deck =
     cards |> DeckCards 
 
@@ -110,9 +108,8 @@ let trySetupDealer drawCardFcn deck =
 type NumberOfPlayers = NumberOfPlayers of int
 
 // TODO: make private (use try wrapper below)
-let initializePlayers numberOfPlayers initialDeck =
-    let (NumberOfPlayers n) = numberOfPlayers
-    let playerIds = [1..n] |> List.map PlayerId
+let initializePlayers (NumberOfPlayers numberOfPlayers) initialDeck =
+    let playerIds = [1..numberOfPlayers] |> List.map PlayerId
     List.fold 
         (fun (currentPlayers, currentDeck) playerId ->
             match trySetupPlayer drawCardFromDeck playerId currentDeck with
@@ -152,8 +149,7 @@ let calcScore (handCards: HandCards) =
         | Ace -> 1
         | _ -> getCardValueSoft card
     
-    let getHandValue handCards =
-        let (HandCards cards) = handCards
+    let getHandValue (HandCards cards) =
         let softValue = List.fold (fun accumulator element -> accumulator + getCardValueSoft element) 0 cards
         
         if softValue <= 21 then softValue
@@ -230,7 +226,7 @@ type Winner =
     | Dealer of Dealer
     | Nobody
 
-let determinWinner players (dealer: Dealer) =
+let determineWinner players (dealer: Dealer) =
     let winningPlayersOpt = players |> getPotentialWinningPlayers 
     match winningPlayersOpt with
     | None ->

@@ -162,7 +162,7 @@ let determineWinnersIO gameState =
         game.Players |> List.iter (fun player -> printfn "%A final hand: %A " player.Id (showHand player.Hand))
         printfn "final dealer hand: %A" (showHand game.Dealer.Hand)
         
-        determinWinner game.Players game.Dealer |> Ok
+        determineWinner game.Players game.Dealer |> Ok
     | _ -> Error ErrorWinnerCanOlyBeDeterminedAfterDealerIsFinished
     
 let askForNumberOfPlayers =
