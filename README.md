@@ -8,6 +8,35 @@
 
 ## Linux IDE FSharp support
 
+### 2020-07-31
+
+```sh
+.NET Core SDK (reflecting any global.json):
+ Version:   3.1.301
+ Commit:    7feb845744
+
+Runtime Environment:
+ OS Name:     arch
+ OS Version:
+ OS Platform: Linux
+ RID:         arch-x64
+ Base Path:   /usr/share/dotnet/sdk/3.1.301/
+
+Host (useful for support):
+  Version: 5.0.0-preview.7.20364.11
+  Commit:  53976d38b1
+
+.NET SDKs installed:
+  3.1.106 [/usr/share/dotnet/sdk]
+  3.1.301 [/usr/share/dotnet/sdk]
+
+.NET runtimes installed:
+  Microsoft.AspNetCore.App 3.1.5 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 3.1.6 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 3.1.5 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 3.1.6 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+```
+
 ### 2020-06-23
 
 ```sh
@@ -43,26 +72,13 @@ Host (useful for support):
 
 #### Rider
 
-TL/DR doesn't seem to work. Use VS Code (or another editor).
+Version: Rider 2020.1.4
 
-Version: Rider 2020.1.3
+NOTE: Opening the solution file from the command line via `rider BlackJack.sln&` fails. Opening the
+solution from within Rider works.
 
-Error message:
-
-```sh
-Microsoft (R) Build Engine version 16.6.0+5ff7b0c9e for .NET Core
-Copyright (C) Microsoft Corporation. All rights reserved.
-MSBUILD : error MSB1025: An internal failure occurred while running MSBuild.
-System.ComponentModel.Win32Exception (13): Permission denied
-   at System.Diagnostics.Process.set_PriorityClassCore(ProcessPriorityClass value)
-   at System.Diagnostics.Process.set_PriorityClass(ProcessPriorityClass value)
-   at Microsoft.Build.CommandLine.MSBuildApp.Execute(String[] commandLine)
-Unhandled exception. System.ComponentModel.Win32Exception (13): Permission denied
-   at System.Diagnostics.Process.set_PriorityClassCore(ProcessPriorityClass value)
-   at System.Diagnostics.Process.set_PriorityClass(ProcessPriorityClass value)
-   at Microsoft.Build.CommandLine.MSBuildApp.Execute(String[] commandLine)
-   at Microsoft.Build.CommandLine.MSBuildApp.Main(String[] args)
-```
+- unit tests work
+- fsi works
 
 #### VS Code
 
