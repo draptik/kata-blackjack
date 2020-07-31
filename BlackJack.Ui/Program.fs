@@ -47,13 +47,26 @@ let trySetupDealerInGame gameState =
             })
     | _ -> Error ErrorDealerCanOnlyBeDealtCardsAfterPlayersHaveBeenDealt
 
+type ConsolePrompt(message: string) =
+    member this.GetValue() =
+        printfn "%s:" message
+        let input = Console.ReadLine()
+        if not (String.IsNullOrWhiteSpace(input)) then
+            input
+        else
+            this.GetValue()
+
+let playerChoiceHitOrStand playerId =
+    ConsolePrompt(sprintf "%A What do you want to do? (1) Hit or (2) Stand?" playerId)
+
+
 let playerLoop game currentPlayerId =
     let rec promptPlay (handInternal: Hand) deckInternal =
         printfn "%A Current Hand: %A" currentPlayerId (showHand handInternal)
-        printfn "%A What do you want to do? (1) Hit or (2) Stand?" currentPlayerId
 
-        let playerChoice = Console.ReadLine().Trim()
-
+        let playerChoicePrompt = playerChoiceHitOrStand currentPlayerId
+        let playerChoice = playerChoicePrompt.GetValue()
+        
         // TODO: Extract the following pattern match (no interaction required)
         match playerChoice with
         | "1" -> // Hit
