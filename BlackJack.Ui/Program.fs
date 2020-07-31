@@ -47,18 +47,31 @@ let trySetupDealerInGame gameState =
             })
     | _ -> Error ErrorDealerCanOnlyBeDealtCardsAfterPlayersHaveBeenDealt
 
-type ConsolePrompt(message: string) =
+
+type ConsolePrompt<'T>(message: string, tryConvert: string -> 'T option) =
     member this.GetValue() =
         printfn "%s:" message
         let input = Console.ReadLine()
-        if not (String.IsNullOrWhiteSpace(input)) then
-            input
-        else
-            this.GetValue()
+        match input |> tryConvert with
+        | Some v -> v
+        | None -> this.GetValue() // invalid input, try again ("recursion") 
 
-let playerChoiceHitOrStand playerId =
-    ConsolePrompt(sprintf "%A What do you want to do? (1) Hit or (2) Stand?" playerId)
+type PlayerChoiceFromPrompt = Hit | Stand
 
+let tryConvertToPlayerChoiceFromPrompt (s: string) =
+    if String.IsNullOrWhiteSpace(s) then
+        None
+    else
+        match s.Trim() with
+        | "1" -> Some PlayerChoiceFromPrompt.Hit
+        | "2" -> Some PlayerChoiceFromPrompt.Stand
+        | _ ->
+            printfn "Unknown selection"
+            None
+        
+let playerChoiceHitOrStand (playerId: PlayerId) =
+    let message = sprintf "%A What do you want to do? (1) Hit or (2) Stand?" playerId
+    ConsolePrompt(message, tryConvertToPlayerChoiceFromPrompt)
 
 let playerLoop game currentPlayerId =
     let rec promptPlay (handInternal: Hand) deckInternal =
@@ -69,7 +82,7 @@ let playerLoop game currentPlayerId =
         
         // TODO: Extract the following pattern match (no interaction required)
         match playerChoice with
-        | "1" -> // Hit
+        | Hit ->
             match drawCardToHand (deckInternal, handInternal) with
             | Error e -> Error e
             | Ok (newDeck, newHand) ->
@@ -87,7 +100,7 @@ let playerLoop game currentPlayerId =
                     }
                 | Stayed score -> promptPlay { Cards = newHand.Cards; Status = (Stayed score) } newDeck // recursion
                 | _ -> Error ErrorPlayerPlayingInvalidHandState
-        | "2" -> // Stand
+        | Stand ->
             let activeHandStatus =
                 match handInternal.Status with
                 | CardsDealt -> Stayed (calcScore handInternal.Cards)
@@ -100,9 +113,6 @@ let playerLoop game currentPlayerId =
                 Dealer = game.Dealer
                 Deck = deckInternal
             }
-        | _ ->
-            printfn "%A Unknown choice" currentPlayerId
-            promptPlay handInternal deckInternal // recursion
 
     let player = game.Players |> List.find (fun p -> p.Id = currentPlayerId)
     promptPlay player.Hand game.Deck
