@@ -90,7 +90,8 @@ let playerLoop game currentPlayerId =
                 // match getStatus (handInternal.Status, newHand.Cards) with
                 | Busted _ ->
                     (* Player looses and is removed from game *)
-                    printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId (showHand { Cards = newHand.Cards; Status = handInternal.Status})
+                    let bustedHand = showHand { Cards = newHand.Cards; Status = handInternal.Status}
+                    printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId bustedHand
                     (* remove player from game *)
                     let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> currentPlayerId)
                     Ok {
