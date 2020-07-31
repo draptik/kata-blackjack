@@ -83,24 +83,24 @@ let playerLoop game currentPlayerId =
         // TODO: Extract the following pattern match (no interaction required)
         match playerChoice with
         | Hit ->
-            match drawCardToHand (deckInternal, handInternal) with
-            | Error e -> Error e
-            | Ok (newDeck, newHand) ->
-                match getStatus { Cards = newHand.Cards; Status = handInternal.Status} with
-                // match getStatus (handInternal.Status, newHand.Cards) with
-                | Busted _ ->
-                    (* Player looses and is removed from game *)
-                    let bustedHand = showHand { Cards = newHand.Cards; Status = handInternal.Status}
-                    printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId bustedHand
-                    (* remove player from game *)
-                    let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> currentPlayerId)
-                    Ok {
-                        Players = playersWithoutBustedPlayer
-                        Dealer = game.Dealer
-                        Deck = newDeck
-                    }
-                | Stayed score -> promptPlay { Cards = newHand.Cards; Status = (Stayed score) } newDeck // recursion
-                | _ -> Error ErrorPlayerPlayingInvalidHandState
+            (deckInternal, handInternal)
+            |> drawCardToHand 
+            |> Result.bind (
+                fun (newDeck, newHand) ->
+                    match getStatus { Cards = newHand.Cards; Status = handInternal.Status } with
+                    | Stayed score -> promptPlay { Cards = newHand.Cards; Status = (Stayed score) } newDeck // recursion
+                    | Busted _ ->
+                        (* Player looses.. *)
+                        let bustedHand = showHand { Cards = newHand.Cards; Status = handInternal.Status}
+                        printfn "%A Busted! You're out of the game. Your hand: %A" currentPlayerId bustedHand
+                        (* ..and is removed from game *)
+                        let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> currentPlayerId)
+                        Ok {
+                            Players = playersWithoutBustedPlayer
+                            Dealer = game.Dealer
+                            Deck = newDeck
+                        }
+                    | _ -> Error ErrorPlayerPlayingInvalidHandState)
         | Stand ->
             let activeHandStatus =
                 match handInternal.Status with
