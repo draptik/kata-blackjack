@@ -4,7 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\BlackJack\BlackJack.fsproj" />
-    <ProjectReference Include="..\BlackJack\BlackJack.Ui.fsproj" />
     <ProjectReference Include="../BlackJack.Ui/BlackJack.Ui.fsproj">
       <Name>BlackJack.Ui.fsproj</Name>
     </ProjectReference>
