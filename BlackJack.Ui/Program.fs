@@ -73,55 +73,51 @@ let playerChoiceHitOrStand (playerId: PlayerId) =
     let message = sprintf "%A What do you want to do? (1) Hit or (2) Stand?" playerId
     ConsolePrompt(message, tryConvertToPlayerChoiceFromPrompt)
 
-let playerLoop gameOuter currentPlayerOuter =
+let rec promptPlay (player: Player) (game: Game) =
+    printfn "%A Current Hand: %A" player.Id (showHand player.Hand)
+    let playerChoicePrompt = playerChoiceHitOrStand player.Id
     
-    let rec promptPlay (playerInner: Player) (gameInner: Game) =
-        printfn "%A Current Hand: %A" playerInner.Id (showHand playerInner.Hand)
+    match playerChoicePrompt.GetValue() with
+    | Hit ->
+        (game.Deck, player.Hand)
+        |> drawCardToHand 
+        |> Result.bind (
+            fun (newDeck, newHand) ->
+                match getStatus { Cards = newHand.Cards; Status = player.Hand.Status } with
+                | Busted _ ->
+                    (* Player looses.. *)
+                    let bustedHand = showHand { Cards = newHand.Cards; Status = player.Hand.Status}
+                    printfn "%A Busted! You're out of the game. Your hand: %A" player.Id bustedHand
+                    (* ..and is removed from game *)
+                    let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> player.Id)
+                    Ok {
+                        Players = playersWithoutBustedPlayer
+                        Dealer = game.Dealer
+                        Deck = newDeck
+                    }
+                | Stayed score ->
+                    promptPlay
+                        { player with Hand = { Cards = newHand.Cards; Status = (Stayed score) }}
+                        { game with Deck = newDeck } // recursion
+                | _ ->
+                    printfn "ups: %A" game // dump complete game state in case things go wrong
+                    Error ErrorPlayerPlayingInvalidHandState)
+    | Stand ->
+        let activeHandStatus =
+            match player.Hand.Status with
+            | CardsDealt -> Stayed (calcScore player.Hand.Cards)
+            | handStatus -> handStatus
+        let hand = { Cards = player.Hand.Cards; Status = activeHandStatus }
+        let player = { Id = player.Id; Hand = hand }
+        let players = game.Players |> List.map (fun p -> if p.Id = player.Id then player else p)
+        Ok {
+            Players = players
+            Dealer = game.Dealer
+            Deck = game.Deck
+        }
 
-        let playerChoicePrompt = playerChoiceHitOrStand playerInner.Id
-        let playerChoice = playerChoicePrompt.GetValue()
-        
-        // TODO: Extract the following pattern match (no interaction required)
-        match playerChoice with
-        | Hit ->
-            (gameInner.Deck, playerInner.Hand)
-            |> drawCardToHand 
-            |> Result.bind (
-                fun (newDeck, newHand) ->
-                    match getStatus { Cards = newHand.Cards; Status = playerInner.Hand.Status } with
-                    | Busted _ ->
-                        (* Player looses.. *)
-                        let bustedHand = showHand { Cards = newHand.Cards; Status = playerInner.Hand.Status}
-                        printfn "%A Busted! You're out of the game. Your hand: %A" playerInner.Id bustedHand
-                        (* ..and is removed from game *)
-                        let playersWithoutBustedPlayer = gameInner.Players |> List.filter (fun p -> p.Id <> playerInner.Id)
-                        Ok {
-                            Players = playersWithoutBustedPlayer
-                            Dealer = gameInner.Dealer
-                            Deck = newDeck
-                        }
-                    | Stayed score ->
-                        promptPlay
-                            { playerInner with Hand = { Cards = newHand.Cards; Status = (Stayed score) }}
-                            { gameInner with Deck = newDeck } // recursion
-                    | _ ->
-                        printfn "ups: %A" gameInner // dump complete game state in case things go wrong
-                        Error ErrorPlayerPlayingInvalidHandState)
-        | Stand ->
-            let activeHandStatus =
-                match playerInner.Hand.Status with
-                | CardsDealt -> Stayed (calcScore playerInner.Hand.Cards)
-                | handStatus -> handStatus
-            let hand = { Cards = playerInner.Hand.Cards; Status = activeHandStatus }
-            let player = { Id = playerInner.Id; Hand = hand }
-            let players = gameInner.Players |> List.map (fun p -> if p.Id = player.Id then player else p)
-            Ok {
-                Players = players
-                Dealer = gameInner.Dealer
-                Deck = gameInner.Deck
-            }
-
-    promptPlay {currentPlayerOuter with Hand = currentPlayerOuter.Hand |> handPlaying} gameOuter
+let playerLoop game player =
+    promptPlay {player with Hand = player.Hand |> handPlaying} game
 
 let playerLoops gameState =
     match gameState with
