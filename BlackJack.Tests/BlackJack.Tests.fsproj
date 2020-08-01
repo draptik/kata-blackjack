@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="DomainTests.fs" />
     <Compile Include="DisplayTests.fs" />
+    <Compile Include="DummyTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FsUnit.Xunit" Version="3.8.1" />
