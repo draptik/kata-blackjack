@@ -8,7 +8,6 @@ type AppError =
     | ErrorPlayerPlayingInvalidHandState
     | ErrorDrawCard
     | ErrorDrawCardToHand
-    | ErrorAskingForNumberOfPlayers
     | ErrorDealerCanOnlyBeDealtCardsAfterPlayersHaveBeenDealt
     | ErrorPlayerLoopsCanOlyStartAfterDealerHasBeenDealt
     | ErrorDealerTurnCanOnlyStartAfterAllPlayersFinished
