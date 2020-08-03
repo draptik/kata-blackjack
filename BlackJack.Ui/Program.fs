@@ -73,11 +73,21 @@ let rec play (player: Player) (game: Game) =
     | Stand ->
         let activeHandStatus =
             match player.Hand.Status with
-            | CardsDealt -> Stayed (calcScore player.Hand.Cards)
+            | CardsDealt -> Stayed (calcScore player.Hand.Cards) // TODO missing state? this prevents false-blackjack state
             | handStatus -> handStatus
-        let hand = { Cards = player.Hand.Cards; Status = activeHandStatus }
-        let player = { Id = player.Id; Hand = hand }
-        let players = game.Players |> List.map (fun p -> if p.Id = player.Id then player else p)
+        
+        let player = {
+            Id = player.Id
+            Hand = {
+                Cards = player.Hand.Cards
+                Status = activeHandStatus
+            }
+        }
+        
+        let players =
+            game.Players
+            |> List.map (fun p -> if p.Id = player.Id then player else p)
+        
         Ok {
             Players = players
             Dealer = game.Dealer
