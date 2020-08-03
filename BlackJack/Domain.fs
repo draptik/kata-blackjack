@@ -226,7 +226,7 @@ type Winner =
     | Dealer of Dealer
     | Nobody
 
-let determineWinner players (dealer: Dealer) =
+let determineWinners players (dealer: Dealer) =
     let winningPlayersOpt = players |> getPotentialWinningPlayers 
     match winningPlayersOpt with
     | None ->
@@ -247,3 +247,5 @@ let determineWinner players (dealer: Dealer) =
         | Stayed, Busted -> Players players
         | Busted, Stayed -> Dealer dealer
         | _ -> Nobody
+
+type CurrentPlayerAction = Hit | Stand

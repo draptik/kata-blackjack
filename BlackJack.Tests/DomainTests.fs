@@ -316,7 +316,7 @@ let ``determine winners example 1 - tied winning players both win`` () =
             Hand = setupHand [(Five, Hearts); (Jack, Hearts); (Two, Hearts); (Ace, Hearts)]  (Stayed (Score 18))
         }
     
-    let actual = determineWinner [p1;p2;p3] dealer
+    let actual = determineWinners [p1;p2;p3] dealer
     
     actual |> should equal (Players [p1; p2])
 
@@ -330,7 +330,7 @@ let ``determine winners example 2 - busted dealer never wins`` () =
             Hand = setupHand [(Ten, Hearts); (Jack, Hearts); (Queen, Hearts)]  (Busted (Score 30))
         }
 
-    let actual = determineWinner [p1] dealer
+    let actual = determineWinners [p1] dealer
 
     actual |> should equal (Players [p1])
 
@@ -356,6 +356,6 @@ let ``determine winners example 3`` () =
         Hand = setupHand [(Seven, Hearts); (Jack, Hearts); (Two, Hearts)]  (Stayed (Score 1))
         }
     
-    let actual = determineWinner [p1;p2;p3;p4] dealer
+    let actual = determineWinners [p1;p2;p3;p4] dealer
     
     actual |> should equal (Players [p4])

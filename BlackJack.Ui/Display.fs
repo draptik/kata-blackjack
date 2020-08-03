@@ -1,5 +1,6 @@
 module BlackJack.Ui.Display
 
+open System
 open BlackJack.Domain
 
 let showCard card =

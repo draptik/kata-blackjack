@@ -7,7 +7,10 @@
     <ProjectReference Include="..\BlackJack\BlackJack.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common.fs" />
     <Compile Include="Display.fs" />
+    <Compile Include="Print.fs" />
+    <Compile Include="Interaction.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
