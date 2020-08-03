@@ -11,6 +11,7 @@
     <Compile Include="Display.fs" />
     <Compile Include="Print.fs" />
     <Compile Include="Interaction.fs" />
+    <Compile Include="App.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
