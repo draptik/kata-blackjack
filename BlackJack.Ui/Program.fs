@@ -1,6 +1,6 @@
 ﻿open BlackJack.Domain
 open BlackJack.Ui.Print
-open BlackJack.Ui.App
+open BlackJack.Ui.Game
 
 [<EntryPoint>]
 let main argv =

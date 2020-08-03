@@ -1,28 +1,9 @@
-module BlackJack.Ui.App
+module BlackJack.Ui.Game
 
 open BlackJack.Domain
+open BlackJack.GamePlay
 open BlackJack.Ui.Print
 open BlackJack.Ui.Interaction
-
-type GamePlayersWithDealtCards = {
-    Players: Player list
-    Deck: Deck
-}
-
-type Game = {
-    Players: Player list
-    Dealer: Dealer
-    Deck: Deck
-}
-
-type GameState =
-    | InitialGameState
-    | CardsDealtToPlayers of GamePlayersWithDealtCards
-    | CardsDealtToDealer of Game
-    | PlayersPlaying of Game
-    | PlayersFinished of Game
-    | DealerPlaying of Game
-    | DealerFinished of Game
 
 let initializePlayers numberOfPlayers =
     tryInitializePlayers numberOfPlayers createDeck
@@ -43,6 +24,7 @@ let initializeDealer gameState =
                 Deck = modifiedDeck
             })
     | _ -> Error ErrorDealerCanOnlyBeDealtCardsAfterPlayersHaveBeenDealt
+
 
 let rec play (player: Player) (game: Game) =
     printCurrentHand player
