@@ -3,12 +3,12 @@ module BlackJack.GamePlay
 open BlackJack.Domain
 
 type GamePlayersWithDealtCards = {
-    Players: Player list
+    Players: PlayerType list
     Deck: Deck
 }
 
 type Game = {
-    Players: Player list
+    PlayerTypes: PlayerType list
     Dealer: Dealer
     Deck: Deck
 }

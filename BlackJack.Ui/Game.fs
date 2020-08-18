@@ -19,77 +19,70 @@ let initializeDealer gameState =
         trySetupDealer drawCardFromDeck game.Deck
         |> Result.bind (fun (dealer, modifiedDeck) ->
             Ok <| CardsDealtToDealer {
-                Players = game.Players
+                PlayerTypes = game.Players
                 Dealer = dealer
                 Deck = modifiedDeck
             })
     | _ -> Error ErrorDealerCanOnlyBeDealtCardsAfterPlayersHaveBeenDealt
 
 
-let rec play (player: Player) (game: Game) =
-    printCurrentHand player
-    let playerChoice = promptPlayerToChooseBetweenHitOrStand player.Id
+let rec play (playerType: PlayerType) (game: Game) =
+    
+    printCurrentHand playerType
+    let playerChoice = playerType |> getPlayerId |> promptPlayerToChooseBetweenHitOrStand 
     
     match playerChoice.GetValue() with
     | Hit ->
-        (game.Deck, player.Hand)
+        (game.Deck, playerType |> getPlayersCards)
         |> drawCardToHand 
         |> Result.bind (
             fun (newDeck, newHand) ->
-                match getStatus { Cards = newHand.Cards; Status = player.Hand.Status } with
-                | Busted _ ->
-                    printBustedMessage player newHand.Cards
-                    let playersWithoutBustedPlayer = game.Players |> List.filter (fun p -> p.Id <> player.Id)
+                match getStatus playerType with
+                | BustedPlayer _ ->
+                    printBustedMessage playerType newHand
+                    let playersWithoutBustedPlayer =
+                        game.PlayerTypes
+                        |> List.filter (fun pt ->
+                            areNotEqualPlayerIds pt playerType)
                     Ok {
-                        Players = playersWithoutBustedPlayer
+                        PlayerTypes = playersWithoutBustedPlayer
                         Dealer = game.Dealer
                         Deck = newDeck
                     }
-                | Stayed score ->
+                | StayedPlayer p ->
                     play
-                        { player with Hand = { Cards = newHand.Cards; Status = (Stayed score) }}
+                        (StayedPlayer { p with Hand = newHand })
                         { game with Deck = newDeck } // recursion
                 | _ ->
                     dumpGameStateForDebugging game
                     Error ErrorPlayerPlayingInvalidHandState)
     | Stand ->
-        let activeHandStatus =
-            match player.Hand.Status with
-            | CardsDealt -> Stayed (calcScore player.Hand.Cards) // TODO missing state? this prevents false-blackjack state
-            | handStatus -> handStatus
-        
-        let player = {
-            Id = player.Id
-            Hand = {
-                Cards = player.Hand.Cards
-                Status = activeHandStatus
-            }
-        }
-        
-        let players =
-            game.Players
-            |> List.map (fun p -> if p.Id = player.Id then player else p)
+        let playerTypes =
+            game.PlayerTypes
+            |> List.map (fun pt ->
+                if areEqualPlayerIds pt playerType then playerType
+                else pt)
         
         Ok {
-            Players = players
+            PlayerTypes = playerTypes
             Dealer = game.Dealer
             Deck = game.Deck
         }
 
-let playerLoop game player =
-    play {player with Hand = player.Hand |> handPlaying} game
+let playerLoop game playerType =
+    play playerType game
 
 let playerLoops gameState =
     match gameState with
     | CardsDealtToDealer game -> 
-        game.Players 
+        game.PlayerTypes 
         |> List.fold 
             (fun gameM player -> 
                 gameM |> Result.bind (fun currentGame -> playerLoop currentGame player))
             (Ok game)
         |> Result.bind (fun game -> 
             Ok <| PlayersFinished {
-                Players = game.Players
+                PlayerTypes = game.PlayerTypes
                 Dealer = game.Dealer
                 Deck = game.Deck
             })
@@ -98,19 +91,19 @@ let playerLoops gameState =
 let dealerTurn gameState =
     match gameState with
     | PlayersFinished game ->
-        let dealerPlayResult = dealerPlays { Cards = game.Dealer.Hand.Cards; Deck = game.Deck }
+        let dealerPlayResult = dealerPlays { Cards = game.Dealer.Hand; Deck = game.Deck }
         match dealerPlayResult with
         | ErrorDuringPlay -> Error ErrorDuringDealerPlay
         | DealerBusted  (score, handCards, deck) ->
             Ok <| DealerFinished {
-                Players = game.Players
-                Dealer = { Hand = { Cards = handCards; Status = Busted score }}
+                PlayerTypes = game.PlayerTypes
+                Dealer = { Hand = handCards }
                 Deck = deck
             }
         | DealerStayed (score, handCards, deck) ->
             Ok <| DealerFinished {
-                Players = game.Players
-                Dealer = { Hand = { Cards = handCards; Status = Stayed score }}
+                PlayerTypes = game.PlayerTypes
+                Dealer = { Hand = handCards }
                 Deck = deck
             }
     | _ -> Error ErrorDealerTurnCanOnlyStartAfterAllPlayersFinished
@@ -119,10 +112,10 @@ let determineWinners gameState =
     match gameState with
     | DealerFinished game ->
         printWinnerHeader
-        game.Players |> List.iter printFinalPlayerHand
+        game.PlayerTypes |> List.iter printFinalPlayerHand
         game.Dealer |> printFinalDealerHand
         
-        determineWinners game.Players game.Dealer |> Ok
+        determineWinners game.PlayerTypes game.Dealer |> Ok
         
     | _ -> Error ErrorWinnerCanOlyBeDeterminedAfterDealerIsFinished
     
