@@ -252,6 +252,10 @@ let determineWinners players (dealer: Dealer) =
             Nobody
     | Some players ->
 
+        (* 
+            All winning players have the same Score. 
+            We take the first player (players.Head) for comparison with the dealer 
+        *)
         let winningPlayers =
             players
             |> List.filter(fun p ->
@@ -259,22 +263,22 @@ let determineWinners players (dealer: Dealer) =
                 | StayedPlayer _ -> true
                 | BlackJackedPlayer _ -> true
                 | _ -> false)
-
-        let isDealerBuster (dealer: Dealer) =
-            calcScore dealer.Hand > Score 21
-            
-        (* 
-            All winning players have the same Score. 
-            We take the first player (players.Head) for comparison with the dealer 
-        *)
         
-        match winningPlayers.Head, (dealer |> isDealerBuster) with
+        let isDealerBusted (dealer: Dealer) =
+            calcScore dealer.Hand > Score 21
+        
+        let dealerBusted = isDealerBusted dealer
+        
+        match winningPlayers.Head, dealerBusted with
         | StayedPlayer player, false ->
             match (calcScore player.Hand, calcScore dealer.Hand) with
             | pScore, dScore when pScore = dScore -> Nobody
             | pScore, dScore when pScore > dScore -> winningPlayers |> Players
             | _ -> Dealer dealer
-        | _ -> Nobody
+        | StayedPlayer _, true ->
+            winningPlayers |> Players
+        | _ ->
+            Nobody
        
 
 type CurrentPlayerAction = Hit | Stand
