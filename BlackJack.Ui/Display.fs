@@ -1,6 +1,5 @@
 module BlackJack.Ui.Display
 
-open System
 open BlackJack.Domain
 
 let showCard card =
@@ -65,19 +64,19 @@ let showCard card =
 let showCardAscii (card: Card) =
     let rank = 
         match card.Rank with
-        | Two -> " 2"
-        | Three -> " 3"
-        | Four -> " 4"
-        | Five -> " 5"
-        | Six -> " 6"
-        | Seven -> " 7"
-        | Eight -> " 8"
-        | Nine -> " 9"
+        | Two -> "2"
+        | Three -> "3"
+        | Four -> "4"
+        | Five -> "5"
+        | Six -> "6"
+        | Seven -> "7"
+        | Eight -> "8"
+        | Nine -> "9"
         | Ten -> "10"
-        | Jack -> "Ja"
-        | Queen -> "Qu"
-        | King -> "Ki"
-        | Ace -> "Ac"
+        | Jack -> "J"
+        | Queen -> "Q"
+        | King -> "K"
+        | Ace -> "A"
 
     let suit =
         match card.Suit with
