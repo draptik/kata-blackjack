@@ -34,13 +34,16 @@ type DealerType =
 type PlayerId = PlayerId of int
 type Player = { Hand: HandCards; Id: PlayerId }
 
+type InitializedPlayer = Player
+type BustedPlayer = Player
+type StayedPlayer = Player
+type BlackJackedPlayer = Player
+
 type PlayerType =
-    | InitializedPlayer of Player
-    | BustedPlayer of Player
-    | StayedPlayer of Player
-    | BlackJackedPlayer of Player
-
-
+    | InitializedPlayer of InitializedPlayer
+    | BustedPlayer of BustedPlayer
+    | StayedPlayer of StayedPlayer
+    | BlackJackedPlayer of BlackJackedPlayer
 
 let getPlayersCards playerType : HandCards =
     match playerType with
@@ -49,10 +52,22 @@ let getPlayersCards playerType : HandCards =
     | StayedPlayer x -> x.Hand
     | BlackJackedPlayer x -> x.Hand
 
-let getPlayerId playerType : PlayerId =
+type NonBustedPlayer = StayedPlayer of Player | BlackJackedPlayer of Player
+
+let getNonBustedPlayersCards (nonBusterPlayers: NonBustedPlayer) : HandCards =
+    match nonBusterPlayers with
+    | StayedPlayer x -> x.Hand
+    | BlackJackedPlayer x -> x.Hand
+    
+let getPlayerId (playerType: PlayerType) : PlayerId =
     match playerType with
     | InitializedPlayer x -> x.Id
     | BustedPlayer x -> x.Id
+    | PlayerType.StayedPlayer x -> x.Id
+    | PlayerType.BlackJackedPlayer x -> x.Id
+
+let getWinningPlayerId (winningPlayers: NonBustedPlayer) : PlayerId =
+    match winningPlayers with
     | StayedPlayer x -> x.Id
     | BlackJackedPlayer x -> x.Id
 
@@ -184,29 +199,29 @@ let calcScore (handCards: HandCards) =
                 
     getHandValue handCards |> Score
 
-let setHandForPlayerType playerType hand =
+let setHandForPlayerType (playerType: PlayerType) hand =
     match playerType with
-    | BlackJackedPlayer p -> BlackJackedPlayer p
-    | BustedPlayer p -> BustedPlayer p
-    | InitializedPlayer p -> InitializedPlayer { p with Hand = hand } 
-    | StayedPlayer p -> StayedPlayer { p with Hand = hand }
+    | PlayerType.BlackJackedPlayer p -> PlayerType.BlackJackedPlayer p
+    | PlayerType.BustedPlayer p -> PlayerType.BustedPlayer p
+    | PlayerType.InitializedPlayer p -> PlayerType.InitializedPlayer { p with Hand = hand } 
+    | PlayerType.StayedPlayer p -> PlayerType.StayedPlayer { p with Hand = hand }
     
 let getStatus (playerType: PlayerType) : PlayerType =
     match playerType with
-    | BustedPlayer p -> BustedPlayer p
-    | BlackJackedPlayer p -> BlackJackedPlayer p
+    | PlayerType.BustedPlayer p -> PlayerType.BustedPlayer p
+    | PlayerType.BlackJackedPlayer p -> PlayerType.BlackJackedPlayer p
     | InitializedPlayer p ->
         if calcScore p.Hand = Score 21 then
-            BlackJackedPlayer p
+            PlayerType.BlackJackedPlayer p
         elif calcScore p.Hand > Score 21 then
-            BustedPlayer p
+            PlayerType.BustedPlayer p
         else
-            StayedPlayer p
-    | StayedPlayer p ->
+            PlayerType.StayedPlayer p
+    | PlayerType.StayedPlayer p ->
         if calcScore p.Hand > Score 21 then
-            BustedPlayer p
+            PlayerType.BustedPlayer p
         else
-            StayedPlayer p    
+            PlayerType.StayedPlayer p    
     
 type DealerPlayResult =
     | ErrorDuringPlay
@@ -231,7 +246,8 @@ let rec dealerPlays (dealerPlayState:DealerPlayState) =
             let newHandCards = card::prevCards |> HandCards
             dealerPlays { Cards = newHandCards; Deck = deck }
 
-let getPotentialWinningPlayers (players: PlayerType list) =
+
+let getPotentialWinningPlayers (players: NonBustedPlayer list) =
     match players with
     | [] -> None
     | players ->
@@ -241,8 +257,7 @@ let getPotentialWinningPlayers (players: PlayerType list) =
             | _ -> true
             
         players
-        |> List.filter isNotBusted
-        |> List.groupBy (fun p -> getPlayersCards p |> calcScore)
+        |> List.groupBy (fun p -> getNonBustedPlayersCards p |> calcScore)
         |> List.sort // sort by score
         |> List.rev // ensure highest score is first
         |> List.head // gets the first element in the list
@@ -250,7 +265,7 @@ let getPotentialWinningPlayers (players: PlayerType list) =
         |> Some
 
 type Winner =
-    | Players of PlayerType list
+    | Players of NonBustedPlayer list
     | Dealer of Dealer
     | Nobody
 
@@ -263,18 +278,9 @@ let determineWinners players (dealer: Dealer) =
             Dealer dealer
         else
             Nobody
-    | Some playerTypeList ->
-        let winningPlayers =
-            playerTypeList
-            |> List.filter(fun p ->
-                match p with
-                | StayedPlayer _ -> true
-                | BlackJackedPlayer _ -> true
-                | _ -> false)
+    | Some winningPlayers ->
         
-        let isDealerBusted (dealer: Dealer) =
-            calcScore dealer.Hand > Score 21
-        
+        let isDealerBusted (dealer: Dealer) = calcScore dealer.Hand > Score 21
         let dealerBusted = isDealerBusted dealer
         
         (* 

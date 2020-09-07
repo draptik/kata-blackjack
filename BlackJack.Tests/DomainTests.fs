@@ -23,7 +23,7 @@ let setupInitialPlayerType id (rawCards: (Rank * Suit) list) =
     rawCards |> setupPlayer id |> InitializedPlayer 
 
 let setupStayedPlayerType id (rawCards: (Rank * Suit) list) =
-    rawCards |> setupPlayer id |> StayedPlayer 
+    rawCards |> setupPlayer id |> NonBustedPlayer.StayedPlayer 
 
 let setupBlackJackedPlayerType id (rawCards: (Rank * Suit) list) =
     rawCards |> setupPlayer id |> BlackJackedPlayer 
@@ -60,7 +60,6 @@ let IsInitializedWithScore score playerType =
 
 let IsStayedWithScore score playerType =
     match playerType with
-    | InitializedPlayer p -> p.Hand |> handEquals score
     | StayedPlayer p -> p.Hand |> handEquals score
     | _ -> isFalse
 
@@ -130,11 +129,6 @@ let ``calcScore returns 0 for an empty hand`` () =
     let emptyHand:HandCards = HandCards []
     emptyHand |> calcScore |> should equal (Score 0)
 
-[<Fact>]
-let ``Status and score: below 21`` () =
-    setupInitialPlayerTypeWithDefaultId [(Two, Spades); (King, Hearts)]
-    |> IsStayedWithScore (Score 12)
-    
 [<Fact>]
 let ``Status and score: below 21 with Ace as 1`` () =
     setupStayedPlayerTypeWithDefaultId [(Ace, Spades); (Nine, Hearts); (Five, Hearts)]
@@ -305,17 +299,6 @@ let ``get potential winning players - hand with single card`` () =
     let winningPlayers = getPotentialWinningPlayers players
 
     winningPlayers |> should equal (Some [p3;p4])
-
-[<Fact>]
-let ``get potential winning players - two players one busted`` () =
-    let p1 = setupStayedPlayerType 1 [(Two, Hearts)]
-    let p2 = setupBustedPlayerType 2 [(Two, Spades); (Queen, Spades); (King, Spades)]
-
-    let players = [p1;p2]
-    
-    let winningPlayers = getPotentialWinningPlayers players
-    
-    winningPlayers |> should equal (Some [p1])
 
 [<Fact>]
 let ``get potential winning players - hand with multiple cards`` () =

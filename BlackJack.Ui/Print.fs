@@ -9,10 +9,10 @@ let printStartMessage =
 
 let printCurrentHand player =
     match player with
-    | BustedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
-    | InitializedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
-    | StayedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
-    | BlackJackedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
+    | PlayerType.BustedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
+    | PlayerType.InitializedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
+    | PlayerType.StayedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
+    | PlayerType.BlackJackedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
 
 let printBustedMessage playerType bustedCards =
     match playerType with
@@ -48,7 +48,7 @@ let printWinDealerWins (dealer: Dealer) =
     printfn "Dealer won! %A %s " (calcScore dealer.Hand) (showHand dealer.Hand)
     
 let printWinPlayers players =
-    printfn "The following players won: %A" (players |> List.map (fun x -> x |> getPlayerId))
+    printfn "The following players won: %A" (players |> List.map (fun x -> x |> getWinningPlayerId))
     
 let printError error =
     printfn "Ups: %A" error

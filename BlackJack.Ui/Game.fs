@@ -37,11 +37,10 @@ let rec play (playerType: PlayerType) (game: Game) =
         |> drawCardToHand 
         |> Result.bind (
             fun (newDeck, newHand) ->
-                let playerTypeWithNewlyDealtHand = playerType |> setHandForPlayerType <| newHand
-                let updatedPlayerType = getStatus playerTypeWithNewlyDealtHand
+                let updatedPlayerType = setHandForPlayerType playerType newHand |> getStatus
                 
                 match updatedPlayerType with
-                | BustedPlayer _ ->
+                | PlayerType.BustedPlayer _ ->
                     printBustedMessage updatedPlayerType newHand
                     let playersWithoutBustedPlayer =
                         game.PlayerTypes
@@ -51,8 +50,8 @@ let rec play (playerType: PlayerType) (game: Game) =
                         Dealer = game.Dealer
                         Deck = newDeck
                     }
-                | StayedPlayer p ->
-                    let stayedPlayer = StayedPlayer { p with Hand = newHand }
+                | PlayerType.StayedPlayer p ->
+                    let stayedPlayer = PlayerType.StayedPlayer { p with Hand = newHand }
                     let updatedPlayers =
                         game.PlayerTypes
                         |> List.map (fun x -> if (getPlayerId x) = p.Id then stayedPlayer else x)
@@ -63,8 +62,8 @@ let rec play (playerType: PlayerType) (game: Game) =
                             Dealer = game.Dealer
                             Deck = newDeck
                         } // recursion
-                | InitializedPlayer p ->
-                    let stayedPlayer = StayedPlayer { p with Hand = newHand }
+                | PlayerType.InitializedPlayer p ->
+                    let stayedPlayer = PlayerType.StayedPlayer { p with Hand = newHand }
                     let updatedPlayers =
                         game.PlayerTypes
                         |> List.map (fun x -> if (getPlayerId x) = p.Id then stayedPlayer else x)
@@ -81,7 +80,7 @@ let rec play (playerType: PlayerType) (game: Game) =
             game.PlayerTypes
             |> List.map (fun pt ->
                 if areEqualPlayerIds pt playerType then
-                    StayedPlayer { Id = playerType |> getPlayerId; Hand = playerType |> getPlayersCards }
+                    PlayerType.StayedPlayer { Id = playerType |> getPlayerId; Hand = playerType |> getPlayersCards }
                 else
                     pt)
         
@@ -137,7 +136,22 @@ let determineWinners gameState =
         game.PlayerTypes |> List.iter printFinalPlayerHand
         game.Dealer |> printFinalDealerHand
         
-        determineWinners game.PlayerTypes game.Dealer |> Ok
+        let nonBustedPlayers =
+            game.PlayerTypes
+            // would be nice if we could get the type system to make this `List.filter` unnecessary
+            |> List.filter (fun playerType ->
+                match playerType with
+                | PlayerType.BustedPlayer _ -> false
+                | PlayerType.InitializedPlayer _ -> false
+                | _ -> true)
+            |> List.map (fun playerType ->
+                match playerType with
+                | PlayerType.StayedPlayer stayedPlayer -> NonBustedPlayer.StayedPlayer stayedPlayer
+                | PlayerType.BlackJackedPlayer blackJackedPlayer -> NonBustedPlayer.BlackJackedPlayer blackJackedPlayer
+                | _ -> failwith "todo")
+            
+        // maybe pass the game (and the above logic) to `determineWinners` ?
+        determineWinners nonBustedPlayers game.Dealer |> Ok
         
     | _ -> Error ErrorWinnerCanOlyBeDeterminedAfterDealerIsFinished
     
