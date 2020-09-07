@@ -90,5 +90,5 @@ let showCardAscii (card: Card) =
 let showHand (hand: HandCards) : string =
     hand
     |> getCards
-    |> List.map showCardAscii 
+    |> List.map showCard 
     |> String.concat " " 
