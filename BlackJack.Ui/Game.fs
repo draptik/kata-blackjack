@@ -37,22 +37,42 @@ let rec play (playerType: PlayerType) (game: Game) =
         |> drawCardToHand 
         |> Result.bind (
             fun (newDeck, newHand) ->
-                match getStatus playerType with
+                let playerTypeWithNewlyDealtHand = playerType |> setHandForPlayerType <| newHand
+                let updatedPlayerType = getStatus playerTypeWithNewlyDealtHand
+                
+                match updatedPlayerType with
                 | BustedPlayer _ ->
-                    printBustedMessage playerType newHand
+                    printBustedMessage updatedPlayerType newHand
                     let playersWithoutBustedPlayer =
                         game.PlayerTypes
-                        |> List.filter (fun pt ->
-                            areNotEqualPlayerIds pt playerType)
+                        |> List.filter (fun pt -> areNotEqualPlayerIds pt playerType)
                     Ok {
                         PlayerTypes = playersWithoutBustedPlayer
                         Dealer = game.Dealer
                         Deck = newDeck
                     }
                 | StayedPlayer p ->
+                    let stayedPlayer = StayedPlayer { p with Hand = newHand }
+                    let updatedPlayers =
+                        game.PlayerTypes
+                        |> List.map (fun x -> if (getPlayerId x) = p.Id then stayedPlayer else x)
                     play
-                        (StayedPlayer { p with Hand = newHand })
-                        { game with Deck = newDeck } // recursion
+                        stayedPlayer
+                        {
+                            PlayerTypes = updatedPlayers
+                            Dealer = game.Dealer
+                            Deck = newDeck
+                        } // recursion
+                | InitializedPlayer p ->
+                    let stayedPlayer = StayedPlayer { p with Hand = newHand }
+                    let updatedPlayers =
+                        game.PlayerTypes
+                        |> List.map (fun x -> if (getPlayerId x) = p.Id then stayedPlayer else x)
+                    Ok {
+                        PlayerTypes = updatedPlayers
+                        Dealer = game.Dealer
+                        Deck = newDeck
+                    }
                 | _ ->
                     dumpGameStateForDebugging game
                     Error ErrorPlayerPlayingInvalidHandState)
@@ -60,8 +80,10 @@ let rec play (playerType: PlayerType) (game: Game) =
         let playerTypes =
             game.PlayerTypes
             |> List.map (fun pt ->
-                if areEqualPlayerIds pt playerType then playerType
-                else pt)
+                if areEqualPlayerIds pt playerType then
+                    StayedPlayer { Id = playerType |> getPlayerId; Hand = playerType |> getPlayersCards }
+                else
+                    pt)
         
         Ok {
             PlayerTypes = playerTypes
@@ -94,13 +116,13 @@ let dealerTurn gameState =
         let dealerPlayResult = dealerPlays { Cards = game.Dealer.Hand; Deck = game.Deck }
         match dealerPlayResult with
         | ErrorDuringPlay -> Error ErrorDuringDealerPlay
-        | DealerBusted  (score, handCards, deck) ->
+        | DealerBusted  (_, handCards, deck) ->
             Ok <| DealerFinished {
                 PlayerTypes = game.PlayerTypes
                 Dealer = { Hand = handCards }
                 Deck = deck
             }
-        | DealerStayed (score, handCards, deck) ->
+        | DealerStayed (_, handCards, deck) ->
             Ok <| DealerFinished {
                 PlayerTypes = game.PlayerTypes
                 Dealer = { Hand = handCards }

@@ -184,16 +184,29 @@ let calcScore (handCards: HandCards) =
                 
     getHandValue handCards |> Score
 
+let setHandForPlayerType playerType hand =
+    match playerType with
+    | BlackJackedPlayer p -> BlackJackedPlayer p
+    | BustedPlayer p -> BustedPlayer p
+    | InitializedPlayer p -> InitializedPlayer { p with Hand = hand } 
+    | StayedPlayer p -> StayedPlayer { p with Hand = hand }
+    
 let getStatus (playerType: PlayerType) : PlayerType =
     match playerType with
-    | InitializedPlayer p -> 
+    | BustedPlayer p -> BustedPlayer p
+    | BlackJackedPlayer p -> BlackJackedPlayer p
+    | InitializedPlayer p ->
         if calcScore p.Hand = Score 21 then
             BlackJackedPlayer p
+        elif calcScore p.Hand > Score 21 then
+            BustedPlayer p
         else
             StayedPlayer p
-    | BustedPlayer p -> BustedPlayer p
-    | StayedPlayer p -> StayedPlayer p       
-    | BlackJackedPlayer p ->BlackJackedPlayer p
+    | StayedPlayer p ->
+        if calcScore p.Hand > Score 21 then
+            BustedPlayer p
+        else
+            StayedPlayer p    
     
 type DealerPlayResult =
     | ErrorDuringPlay
@@ -250,14 +263,9 @@ let determineWinners players (dealer: Dealer) =
             Dealer dealer
         else
             Nobody
-    | Some players ->
-
-        (* 
-            All winning players have the same Score. 
-            We take the first player (players.Head) for comparison with the dealer 
-        *)
+    | Some playerTypeList ->
         let winningPlayers =
-            players
+            playerTypeList
             |> List.filter(fun p ->
                 match p with
                 | StayedPlayer _ -> true
@@ -269,16 +277,22 @@ let determineWinners players (dealer: Dealer) =
         
         let dealerBusted = isDealerBusted dealer
         
-        match winningPlayers.Head, dealerBusted with
-        | StayedPlayer player, false ->
-            match (calcScore player.Hand, calcScore dealer.Hand) with
-            | pScore, dScore when pScore = dScore -> Nobody
-            | pScore, dScore when pScore > dScore -> winningPlayers |> Players
-            | _ -> Dealer dealer
-        | StayedPlayer _, true ->
-            winningPlayers |> Players
+        (* 
+            All winning players have the same Score. 
+            We take the first player (players.Head) for comparison with the dealer 
+        *)
+        match winningPlayers with
+        | [] -> Nobody // <- better error handling: This catches winning players with invalid state "PlayerInitialized"
         | _ ->
-            Nobody
-       
+            match winningPlayers.Head, dealerBusted with
+            | StayedPlayer player, false ->
+                match (calcScore player.Hand, calcScore dealer.Hand) with
+                | pScore, dScore when pScore = dScore -> Nobody
+                | pScore, dScore when pScore > dScore -> winningPlayers |> Players
+                | _ -> Dealer dealer
+            | StayedPlayer _, true ->
+                winningPlayers |> Players
+            | _ ->
+                Nobody
 
 type CurrentPlayerAction = Hit | Stand
