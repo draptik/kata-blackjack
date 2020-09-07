@@ -9,16 +9,17 @@ let printStartMessage =
 
 let printCurrentHand player =
     match player with
-    | BustedPlayer p -> printfn "%A Current Hand: %A" p.Id (showHand p.Hand) 
-    | InitializedPlayer p -> printfn "%A Current Hand: %A" p.Id (showHand p.Hand) 
-    | StayedPlayer p -> printfn "%A Current Hand: %A" p.Id (showHand p.Hand) 
-    | BlackJackedPlayer p -> printfn "%A Current Hand: %A" p.Id (showHand p.Hand) 
+    | BustedPlayer p -> printfn "%A %A Current Hand: %s" p.Id (calcScore p.Hand) (showHand p.Hand) 
+    | InitializedPlayer p -> printfn "%A %A Current Hand: %s" p.Id (calcScore p.Hand) (showHand p.Hand) 
+    | StayedPlayer p -> printfn "%A %A Current Hand: %s" p.Id (calcScore p.Hand) (showHand p.Hand) 
+    | BlackJackedPlayer p -> printfn "%A %A Current Hand: %s" p.Id (calcScore p.Hand) (showHand p.Hand) 
 
-let printBustedMessage (player: PlayerType) bustedCards =
-    match player with
+let printBustedMessage playerType bustedCards =
+    match playerType with
     | BustedPlayer p ->
-        printfn "%A Busted! You're out of the game. Your hand: %A"
+        printfn "%A Busted! You're out of the game. %A Your hand: %s"
             p.Id
+            (calcScore p.Hand)
             (showHand bustedCards)
     | _ ->
         ()
@@ -30,16 +31,21 @@ let printWinnerHeader =
     printfn "Result is:%s" Environment.NewLine
     
 let printFinalPlayerHand (player:PlayerType) =
-    printfn "%A final hand: %A " (player |> getPlayerId) (player |> getPlayersCards |> showHand)
+    printfn "%A %A final hand: %s "
+        (player |> getPlayerId)
+        (calcScore (player |> getPlayersCards))
+        (player |> getPlayersCards |> showHand)
 
 let printFinalDealerHand (dealer: Dealer) =
-    printfn "final dealer hand: %A" (showHand dealer.Hand)
+    printfn "final dealer score %A hand: %s"
+        (calcScore dealer.Hand)
+        (showHand dealer.Hand)
     
 let printWinNobody =
     printfn "Nobody won ;-("
 
 let printWinDealerWins (dealer: Dealer) =
-    printfn "Dealer won! %A" (showHand dealer.Hand)
+    printfn "Dealer won! %A %s" (calcScore dealer.Hand) (showHand dealer.Hand)
     
 let printWinPlayers players =
     printfn "The following players won: %A" (players |> List.map (fun x -> x |> getPlayerId))
