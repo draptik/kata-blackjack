@@ -14,17 +14,18 @@ let printCurrentHand player =
     | PlayerType.StayedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
     | PlayerType.BlackJackedPlayer p -> printfn "%A %A Current Hand: %s " p.Id (calcScore p.Hand) (showHand p.Hand) 
 
-let printBustedMessage playerType bustedCards =
+let printBustedMessage playerType =
     match playerType with
     | BustedPlayer p ->
         printfn "%A Busted! You're out of the game. %A Your hand: %s "
             p.Id
             (calcScore p.Hand)
-            (showHand bustedCards)
+            (showHand p.Hand)
     | _ ->
         ()
 
-let dumpGameStateForDebugging game =
+let dumpGameStateForDebugging game handCards =
+    printfn "ups: %s " (showHand handCards)
     printfn "ups: %A" game // dump complete game state in case things go wrong
     
 let printWinnerHeader =    

@@ -41,7 +41,7 @@ let rec play (playerType: PlayerType) (game: Game) =
                 
                 match updatedPlayerType with
                 | PlayerType.BustedPlayer _ ->
-                    printBustedMessage updatedPlayerType newHand
+                    printBustedMessage updatedPlayerType
                     let playersWithoutBustedPlayer =
                         game.PlayerTypes
                         |> List.filter (fun pt -> areNotEqualPlayerIds pt playerType)
@@ -73,7 +73,7 @@ let rec play (playerType: PlayerType) (game: Game) =
                         Deck = newDeck
                     }
                 | _ ->
-                    dumpGameStateForDebugging game
+                    dumpGameStateForDebugging game newHand
                     Error ErrorPlayerPlayingInvalidHandState)
     | Stand ->
         let playerTypes =

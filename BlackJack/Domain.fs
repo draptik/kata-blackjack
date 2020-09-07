@@ -53,11 +53,6 @@ let getPlayersCards playerType : HandCards =
     | BlackJackedPlayer x -> x.Hand
 
 type NonBustedPlayer = StayedPlayer of Player | BlackJackedPlayer of Player
-
-let getNonBustedPlayersCards (nonBusterPlayers: NonBustedPlayer) : HandCards =
-    match nonBusterPlayers with
-    | StayedPlayer x -> x.Hand
-    | BlackJackedPlayer x -> x.Hand
     
 let getPlayerId (playerType: PlayerType) : PlayerId =
     match playerType with
@@ -210,7 +205,7 @@ let getStatus (playerType: PlayerType) : PlayerType =
     match playerType with
     | PlayerType.BustedPlayer p -> PlayerType.BustedPlayer p
     | PlayerType.BlackJackedPlayer p -> PlayerType.BlackJackedPlayer p
-    | InitializedPlayer p ->
+    | PlayerType.InitializedPlayer p ->
         if calcScore p.Hand = Score 21 then
             PlayerType.BlackJackedPlayer p
         elif calcScore p.Hand > Score 21 then
@@ -251,17 +246,9 @@ let getPotentialWinningPlayers (players: NonBustedPlayer list) =
     match players with
     | [] -> None
     | players ->
-        let isNotBusted playerType =
-            match playerType with
-            | BustedPlayer _ -> false
-            | _ -> true
-            
         players
-        |> List.groupBy (fun p -> getNonBustedPlayersCards p |> calcScore)
         |> List.sort // sort by score
         |> List.rev // ensure highest score is first
-        |> List.head // gets the first element in the list
-        |> snd // gets the second part of the tuple (all potential winning players); ("fst" is the score here)
         |> Some
 
 type Winner =
@@ -287,18 +274,15 @@ let determineWinners players (dealer: Dealer) =
             All winning players have the same Score. 
             We take the first player (players.Head) for comparison with the dealer 
         *)
-        match winningPlayers with
-        | [] -> Nobody // <- better error handling: This catches winning players with invalid state "PlayerInitialized"
+        match winningPlayers.Head, dealerBusted with
+        | StayedPlayer player, false ->
+            match (calcScore player.Hand, calcScore dealer.Hand) with
+            | pScore, dScore when pScore = dScore -> Nobody
+            | pScore, dScore when pScore > dScore -> winningPlayers |> Players
+            | _ -> Dealer dealer
+        | StayedPlayer _, true ->
+            winningPlayers |> Players
         | _ ->
-            match winningPlayers.Head, dealerBusted with
-            | StayedPlayer player, false ->
-                match (calcScore player.Hand, calcScore dealer.Hand) with
-                | pScore, dScore when pScore = dScore -> Nobody
-                | pScore, dScore when pScore > dScore -> winningPlayers |> Players
-                | _ -> Dealer dealer
-            | StayedPlayer _, true ->
-                winningPlayers |> Players
-            | _ ->
-                Nobody
+            Nobody
 
 type CurrentPlayerAction = Hit | Stand
